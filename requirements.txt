@@ -1,19 +1,115 @@
-# Healthcare AI System - Root Requirements
-# This file lists the main dependencies for the entire project
+# ============================================
+# Healthcare AI System - Backend Dependencies
+# Multilingual + Voice + Gemini AI Edition
+# ============================================
 
-# Backend dependencies (see backend/requirements.txt for full list)
-fastapi>=0.100.0
-uvicorn>=0.23.0
+# Core API Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+pymongo[srv]==4.6.1
 
-# ML dependencies
-scikit-learn>=1.3.0
-joblib>=1.3.0
-pandas>=2.0.0
-numpy>=1.24.0
 
-# Streamlit
-streamlit>=1.28.0
+# Data Processing
+pandas==2.1.3
+numpy==1.26.2
 
-# Development dependencies
-pytest>=7.4.0
-pytest-cov>=4.1.0
+# Machine Learning
+joblib==1.3.2
+scikit-learn==1.3.2
+
+# Google Gemini AI
+google-generativeai>=0.7.2
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Translation & Multilingual Support
+googletrans==4.0.0rc1
+langdetect==1.0.9
+
+# Voice - Speech Recognition
+SpeechRecognition==3.10.0
+pydub==0.25.1
+gTTS==2.4.0
+
+# Audio Processing
+pyaudio==0.2.14
+wave==0.0.2
+
+# Additional Utilities
+requests==2.31.0
+python-json-logger==2.0.7
+aiofiles==23.2.1
+
+# Agentic Multi-API Stack
+groq==0.4.2
+tavily-python==0.3.1
+phidata==2.4.10
+elevenlabs==0.2.27
+google-cloud-translate==3.12.1
+
+# Optional - Enhanced Features
+# Uncomment if needed:
+# deep-translator==1.11.4  # Alternative translator
+# pyttsx3==2.90  # Offline TTS
+# azure-cognitiveservices-speech==1.31.0  # Azure Speech
+
+# ============================================
+# Installation Notes
+# ============================================
+
+# Basic Install:
+# pip install -r requirements.txt
+
+# If pyaudio fails (common on Windows/Mac):
+# Windows: pip install pipwin && pipwin install pyaudio
+# Mac: brew install portaudio && pip install pyaudio
+# Linux: sudo apt-get install python3-pyaudio
+
+# For MP3 support (pydub):
+# Install ffmpeg:
+# - Windows: Download from ffmpeg.org
+# - Mac: brew install ffmpeg
+# - Linux: sudo apt-get install ffmpeg
+
+# ============================================
+# Version Compatibility
+# ============================================
+
+# Python: 3.8+
+# Tested on:
+# - Python 3.8, 3.9, 3.10, 3.11
+# - Windows 10/11, macOS, Ubuntu 20.04+
+
+# ============================================
+# Troubleshooting
+# ============================================
+
+# If googletrans gives errors:
+# pip install googletrans==4.0.0rc1
+
+# If SpeechRecognition doesn't work:
+# pip install --upgrade SpeechRecognition
+
+# If gTTS fails:
+# pip install --upgrade gTTS
+
+# For backend without voice (minimal):
+# Just install: fastapi, uvicorn, pandas, joblib,
+#               scikit-learn, google-generativeai,
+#               python-dotenv
+
+# ============================================
+# Deployment
+# ============================================
+
+# Production:
+# pip install gunicorn  # For production WSGI server
+
+# Docker:
+# Use this requirements.txt in Dockerfile
+
+# Cloud (Railway/Render):
+# Just upload this file, auto-installs
