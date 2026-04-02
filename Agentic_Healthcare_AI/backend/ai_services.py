@@ -187,37 +187,11 @@ Key Guidelines:
             
             complete_system_prompt = system_prompt + "\n\n" + agent_instructions + "\n\n" + language_instruction
 
-            # Format history for Gemini
-            gemini_history = []
-            if history:
-                for msg in history:
-                    role = 'user' if msg.get('role') == 'user' else 'model'
-                    gemini_history.append({
-                        "role": role,
-                        "parts": [{"text": msg.get('content', '')}]
-                    })
-
-            # Initialize Agentic Session
-            # Note: 1.5/2.0 Models automatically handle grounding if prompted
-            chat_session = gemini_model.start_chat(history=gemini_history)
-            
-            # Contextualize with real-time patient data
-            context_msg = ""
-            if patient_context:
-                context_msg = "Current Patient Bio-Data:\n"
-                for k, v in patient_context.items():
-                    if k != 'predictions':
-                        context_msg += f"- {k}: {v}\n"
-                context_msg += "\n"
-
             # PHASE 5: Agentic Reasoning Turn
-            # If the query is complex, we use the Reasoning Agent (Groq + Tavily)
-            # This provides ultra-fast reasoning and live web grounding.
             if reasoning_agent and not history:
                 try:
                     agent_response = reasoning_agent.run(f"User Query ({language_name}): {message}\nContext: {json.dumps(patient_context)}")
                     response_text = agent_response.content if hasattr(agent_response, 'content') else str(agent_response)
-                    
                     return {
                         "success": True,
                         "response": response_text,
@@ -229,25 +203,73 @@ Key Guidelines:
                 except Exception as agent_err:
                     print(f"Agentic Fallback to Gemini: {agent_err}")
 
-            # Fallback/Default: Execute Gemini turn
-            final_msg = complete_system_prompt + "\n\n" + context_msg + message
-            response = chat_session.send_message(final_msg)
+            # ====================================================================
+            # SMART FALLBACK & RETRY LOGIC (Handles 429 Errors)
+            # ====================================================================
+            import time
+            models_to_try = [
+                settings.DEFAULT_MODEL, 
+                "gemini-1.5-flash", 
+                "gemini-1.5-pro",
+                "gemini-pro"
+            ]
             
-            response_text = response.text if hasattr(response, 'text') else str(response)
-            
+            last_error = None
+            for model_name in models_to_try:
+                try:
+                    # Configure the specific model for this attempt
+                    current_model = genai.GenerativeModel(
+                        model_name=model_name,
+                        generation_config={
+                            "temperature": settings.TEMPERATURE,
+                            "max_output_tokens": settings.MAX_TOKENS,
+                        }
+                    )
+                    
+                    # Format history
+                    gemini_history = []
+                    if history:
+                        for msg in history:
+                            role = 'user' if msg.get('role') == 'user' else 'model'
+                            gemini_history.append({"role": role, "parts": [{"text": msg.get('content', '')}]})
+
+                    chat_session = current_model.start_chat(history=gemini_history)
+                    
+                    context_msg = ""
+                    if patient_context:
+                        context_msg = "Current Patient Bio-Data:\n"
+                        for k, v in patient_context.items():
+                            if k != 'predictions':
+                                context_msg += f"- {k}: {v}\n"
+                        context_msg += "\n"
+
+                    final_msg = complete_system_prompt + "\n\n" + context_msg + message
+                    response = chat_session.send_message(final_msg)
+                    
+                    return {
+                        "success": True,
+                        "response": response.text,
+                        "agent_status": f"Agentic AI Synthesis (Model: {model_name})",
+                        "model": model_name,
+                        "timestamp": datetime.now().isoformat(),
+                        "language": language
+                    }
+                except Exception as e:
+                    last_error = str(e)
+                    print(f"⚠️  Model {model_name} failed: {last_error}")
+                    if "429" in last_error:
+                        continue # Try the next model
+                    break # Fatal error, stop trying
+
             return {
-                "success": True,
-                "response": response_text,
-                "agent_status": "Agentic AI Synthesis Verified (Gemini)",
-                "model": settings.DEFAULT_MODEL,
-                "timestamp": datetime.now().isoformat(),
-                "language": language
+                "success": False,
+                "error": f"AI Council Busy (429). Please wait 10 seconds. (Details: {last_error})",
+                "provider": "google_gemini_agent"
             }
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Agentic Error: {str(e)}",
-                "provider": "google_gemini_agent"
+                "error": f"Agentic System Error: {str(e)}"
             }
 
     @staticmethod
