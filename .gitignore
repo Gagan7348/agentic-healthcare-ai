@@ -9,7 +9,6 @@ venv_pyaudio/
 *.egg-info/
 dist/
 build/
-*.pkl
 
 # Node / Frontend
 frontend/node_modules/
@@ -36,7 +35,6 @@ Thumbs.db
 
 # Large ML / data files
 dataset/
-models/
 *.csv
 *.sqlite
 *.db

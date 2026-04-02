@@ -1,0 +1,51 @@
+{
+  "total_patients": 15000,
+  "timestamp": "2026-03-29T23:56:56.923511",
+  "models_trained": [
+    "diabetes",
+    "heart_disease",
+    "kidney_disease"
+  ],
+  "accuracies": {
+    "diabetes": 0.8503,
+    "heart_disease": 0.9433,
+    "kidney_disease": 0.98
+  },
+  "auc_scores": {
+    "diabetes": 0.9519,
+    "heart_disease": 0.9934,
+    "kidney_disease": 0.9899
+  },
+  "details": {
+    "diabetes": {
+      "best_model": "Voting Ensemble",
+      "accuracy": 0.8503,
+      "auc": 0.9519,
+      "xgb_accuracy": 0.8463,
+      "gb_accuracy": 0.8467,
+      "rf_accuracy": 0.8467,
+      "stack_accuracy": 0.8503,
+      "features_used": 28
+    },
+    "heart_disease": {
+      "best_model": "Random Forest",
+      "accuracy": 0.9433,
+      "auc": 0.9934,
+      "xgb_accuracy": 0.9397,
+      "gb_accuracy": 0.9417,
+      "rf_accuracy": 0.9433,
+      "stack_accuracy": 0.9403,
+      "features_used": 28
+    },
+    "kidney_disease": {
+      "best_model": "XGBoost",
+      "accuracy": 0.98,
+      "auc": 0.9899,
+      "xgb_accuracy": 0.98,
+      "gb_accuracy": 0.9793,
+      "rf_accuracy": 0.9783,
+      "stack_accuracy": 0.9797,
+      "features_used": 29
+    }
+  }
+}
