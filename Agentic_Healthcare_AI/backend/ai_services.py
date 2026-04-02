@@ -122,7 +122,7 @@ Key Guidelines:
         return f"Real-time search results for '{query}': Current WHO and PubMed protocols recommend immediate diagnostic scaling for suspected symptoms. [Source: Live Agentic AI Search]"
 
     @staticmethod
-    def chat_with_gemini(
+    async def chat_with_gemini(
         message: str,
         patient_context: Optional[Dict] = None,
         history: Optional[List[Dict]] = None,
@@ -504,7 +504,7 @@ Acknowledge their symptoms, state the urgency mildly, and give the single most i
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    def analyze_medical_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
+    async def analyze_medical_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
         """
         Analyze medical report (PDF or Image) using Gemini Vision/Multimodal
         """
@@ -541,7 +541,7 @@ Use a highly engaging, conversational tone in {language_name} like an expert, ca
 CRITICAL: If {language_name} is an Indian language like Hindi, Tamil, Bengali, etc., you MUST write the ENTIRE response in its native script (e.g., Devanagari for Hindi). DO NOT use English letters to spell out Indian words (No Hinglish/Romanized text)."""
 
             # ====================================================================
-            # SMART VISION FALLBACK & RETRY LOGIC (Prevents 504 Timeouts)
+            # SMART VISION FALLBACK & KEY ROTATION (Prevents 429/504)
             # ====================================================================
             import time
             from google.api_core import retry
@@ -553,46 +553,89 @@ CRITICAL: If {language_name} is an Indian language like Hindi, Tamil, Bengali, e
             ]
             
             last_error = None
-            for model_name in vision_models:
+            # Stage 1: Try Gemini with Key Rotation
+            for api_key in settings.GEMINI_API_KEYS:
                 try:
-                    # 1. Select the vision engine
-                    current_vision_model = genai.GenerativeModel(model_name=model_name)
+                    # Configure current key
+                    genai.configure(api_key=api_key)
                     
-                    # 2. Package the report and instructions
-                    content_parts = [
-                        {"mime_type": file_type, "data": file_content},
-                        prompt
-                    ]
+                    # Try models for this key
+                    for model_name in vision_models:
+                        try:
+                            current_vision_model = genai.GenerativeModel(model_name=model_name)
+                            
+                            content_parts = [
+                                {"mime_type": file_type, "data": file_content},
+                                prompt
+                            ]
+                            
+                            response = current_vision_model.generate_content(
+                                content_parts,
+                                request_options={
+                                    "timeout": 120, 
+                                    "retry": retry.Retry(initial=1.0, multiplier=2.0, maximum=30.0, deadline=120.0)
+                                }
+                            )
+                            
+                            response_text = response.text if hasattr(response, 'text') else str(response)
+                            
+                            return {
+                                "success": True,
+                                "analysis": response_text,
+                                "model": model_name,
+                                "language": language,
+                                "agent_status": f"Vision Consensus Panel (Model: {model_name})",
+                                "key_rotation": "Used Backup Key" if api_key != settings.GEMINI_API_KEY else "Primary Key Active",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        except Exception as e:
+                            last_error = str(e)
+                            print(f"⚠️  Vision Model {model_name} with key {api_key[:6]}... failed: {last_error}")
+                            if "429" in last_error or "deadline" in last_error.lower() or "504" in last_error:
+                                continue # Try next model
+                            break # Fatal model error, try next key
+                except Exception as key_err:
+                    print(f"⚠️  Vision Key rotation error: {key_err}")
+                    continue
+
+            # Stage 2: Emergency Fallback to GPT-4o Vision if Gemini fails
+            try:
+                print("🚨 All Gemini Vision Quotas Exceeded - Falling back to GPT-4o Vision Expert...")
+                from .openai_service import get_openai_client
+                client = get_openai_client()
+                if client:
+                    import base64
+                    base64_image = base64.b64encode(file_content).decode('utf-8')
                     
-                    # 3. Execute with high-priority timeout
-                    response = current_vision_model.generate_content(
-                        content_parts,
-                        request_options={
-                            "timeout": 120, 
-                            "retry": retry.Retry(initial=1.0, multiplier=2.0, maximum=30.0, deadline=120.0)
-                        }
+                    # GPT-4o Vision Request
+                    response = await client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {"type": "image_url", "image_url": {"url": f"data:{file_type};base64,{base64_image}"}}
+                                ]
+                            }
+                        ],
+                        max_tokens=1500
                     )
-                    
-                    response_text = response.text if hasattr(response, 'text') else str(response)
                     
                     return {
                         "success": True,
-                        "analysis": response_text,
-                        "model": model_name,
+                        "analysis": response.choices[0].message.content,
+                        "model": "GPT-4o Vision Specialist (Emergency Fallback)",
                         "language": language,
-                        "agent_status": f"Vision Consensus Panel (Model: {model_name})",
+                        "agent_status": "GPT-4o Medical Vision Expert",
                         "timestamp": datetime.now().isoformat()
                     }
-                except Exception as e:
-                    last_error = str(e)
-                    print(f"⚠️  Vision Model {model_name} failed: {last_error}")
-                    if "429" in last_error or "deadline" in last_error.lower() or "504" in last_error:
-                        continue # Try the next model
-                    break # Fatal error
+            except Exception as gpt_err:
+                print(f"❌ GPT-4o Vision Fallback also failed: {gpt_err}")
 
             return {
                 "success": False,
-                "error": f"Medical Imaging System Busy. Please wait 10 seconds. (Details: {last_error})",
+                "error": f"Medical Imaging System Busy (All Quotas Exceeded). Please wait 10 seconds. (Details: {last_error})",
                 "provider": "google_gemini_vision"
             }
         except Exception as e:
@@ -610,9 +653,9 @@ def consensus(patient_data: Dict, symptoms: Dict, predictions: Dict, language: s
 # Convenience Functions
 # ============================================================================
 
-def chat(message: str, patient_context: Optional[Dict] = None, history: Optional[List[Dict]] = None, language: str = "english") -> Dict:
+async def chat(message: str, patient_context: Optional[Dict] = None, history: Optional[List[Dict]] = None, language: str = "english") -> Dict:
     """Quick chat with Gemini AI with context and history"""
-    return HealthcareAI.chat_with_gemini(message, patient_context, history, language=language)
+    return await HealthcareAI.chat_with_gemini(message, patient_context, history, language=language)
 
 async def analyze(patient_data: Dict, predictions: Dict, language: str = "english") -> Dict:
     """Quick health analysis"""
@@ -638,11 +681,11 @@ def voice_summary(patient_data: Dict, symptoms: Dict, urgency: str, language: st
     """Quick voice summary specifically for TTS"""
     return HealthcareAI.generate_voice_summary(patient_data, symptoms, urgency, language=language)
 
-def analyze_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
+async def analyze_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
     """Quick medical report analysis"""
-    return HealthcareAI.analyze_medical_report(file_content, file_type, language)
+    return await HealthcareAI.analyze_medical_report(file_content, file_type, language)
 
-def dual_consensus_review(patient_data: Dict, ml_predictions: Dict, gpt_analysis: str, language: str = "english") -> Dict:
+async def dual_consensus_review(patient_data: Dict, ml_predictions: Dict, gpt_analysis: str, language: str = "english") -> Dict:
     """
     Takes an initial draft from GPT-4o and passes it to Gemini to synthesize a final Dual-AI consensus.
     """
@@ -670,7 +713,7 @@ Provide a FINAL UNIFIED CLINICAL DECISION that synthesizes all this data. Do NOT
 Make it highly conversational, highly detailed, and completely in {language}."""
 
     # We use chat_with_gemini directly
-    result = HealthcareAI.chat_with_gemini(prompt, patient_data, language=language)
+    result = await HealthcareAI.chat_with_gemini(prompt, patient_data, language=language)
     
     # Restructure result to signify it's a consensus
     if result.get("success"):

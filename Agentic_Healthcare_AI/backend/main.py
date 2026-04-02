@@ -401,7 +401,7 @@ async def ai_chat_endpoint(chat_msg: ChatMessage):
             patient_context['predictions'] = predictions
         
         # Get AI response
-        result = chat(chat_msg.message, patient_context, chat_msg.history, language=chat_msg.language)
+        result = await chat(chat_msg.message, patient_context, chat_msg.history, language=chat_msg.language)
         
         # Add predictions if available
         if chat_msg.patient_data:
@@ -500,7 +500,7 @@ async def ai_analyze_report_endpoint(
         content = await file.read()
         
         # Analyze using multimodal Gemini
-        result = analyze_report(content, file.content_type, language)
+        result = await analyze_report(content, file.content_type, language)
         
         return result
     
