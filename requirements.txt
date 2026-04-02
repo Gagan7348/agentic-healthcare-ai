@@ -1,0 +1,19 @@
+# Healthcare AI System - Root Requirements
+# This file lists the main dependencies for the entire project
+
+# Backend dependencies (see backend/requirements.txt for full list)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# ML dependencies
+scikit-learn>=1.3.0
+joblib>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Streamlit
+streamlit>=1.28.0
+
+# Development dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0

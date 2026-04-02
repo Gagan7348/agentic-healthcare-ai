@@ -1,0 +1,19 @@
+# Core ML and Data
+pandas>=1.5.0
+numpy>=1.23.0
+scikit-learn>=1.2.0
+joblib>=1.2.0
+
+# Streamlit
+streamlit>=1.28.0
+
+# PDF handling
+PyPDF2>=3.0.1
+
+# Voice Input/Output
+SpeechRecognition>=3.10.0
+gTTS>=2.4.0
+pyaudio>=0.2.13
+
+# Additional utilities
+python-dateutil>=2.8.2
