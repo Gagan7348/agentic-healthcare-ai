@@ -18,6 +18,9 @@ class Settings:
     # GOOGLE GEMINI AI API KEY
     # ========================================
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_API_KEY_BACKUP: str = os.getenv("GEMINI_API_KEY_BACKUP", "")
+    GEMINI_API_KEYS: list = [k for k in [GEMINI_API_KEY, GEMINI_API_KEY_BACKUP] if k]
+    
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")

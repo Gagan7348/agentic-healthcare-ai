@@ -204,7 +204,7 @@ Key Guidelines:
                     print(f"Agentic Fallback to Gemini: {agent_err}")
 
             # ====================================================================
-            # SMART FALLBACK & RETRY LOGIC (Handles 429 Errors)
+            # SMART FALLBACK & KEY ROTATION (Handles 429/Quota Errors)
             # ====================================================================
             import time
             models_to_try = [
@@ -215,55 +215,67 @@ Key Guidelines:
             ]
             
             last_error = None
-            for model_name in models_to_try:
+            # Loop through all available API keys if we hit a quota
+            for api_key in settings.GEMINI_API_KEYS:
                 try:
-                    # Configure the specific model for this attempt
-                    current_model = genai.GenerativeModel(
-                        model_name=model_name,
-                        generation_config={
-                            "temperature": settings.TEMPERATURE,
-                            "max_output_tokens": settings.MAX_TOKENS,
-                        }
-                    )
+                    # 1. Update the configuration for this key
+                    genai.configure(api_key=api_key)
                     
-                    # Format history
-                    gemini_history = []
-                    if history:
-                        for msg in history:
-                            role = 'user' if msg.get('role') == 'user' else 'model'
-                            gemini_history.append({"role": role, "parts": [{"text": msg.get('content', '')}]})
+                    # 2. Try the models with this key
+                    for model_name in models_to_try:
+                        try:
+                            # Configure the specific model for this attempt
+                            current_model = genai.GenerativeModel(
+                                model_name=model_name,
+                                generation_config={
+                                    "temperature": settings.TEMPERATURE,
+                                    "max_output_tokens": settings.MAX_TOKENS,
+                                }
+                            )
+                            
+                            # Format history
+                            gemini_history = []
+                            if history:
+                                for msg in history:
+                                    role = 'user' if msg.get('role') == 'user' else 'model'
+                                    gemini_history.append({"role": role, "parts": [{"text": msg.get('content', '')}]})
 
-                    chat_session = current_model.start_chat(history=gemini_history)
-                    
-                    context_msg = ""
-                    if patient_context:
-                        context_msg = "Current Patient Bio-Data:\n"
-                        for k, v in patient_context.items():
-                            if k != 'predictions':
-                                context_msg += f"- {k}: {v}\n"
-                        context_msg += "\n"
+                            chat_session = current_model.start_chat(history=gemini_history)
+                            
+                            context_msg = ""
+                            if patient_context:
+                                context_msg = "Current Patient Bio-Data:\n"
+                                for k, v in patient_context.items():
+                                    if k != 'predictions':
+                                        context_msg += f"- {k}: {v}\n"
+                                context_msg += "\n"
 
-                    final_msg = complete_system_prompt + "\n\n" + context_msg + message
-                    response = chat_session.send_message(final_msg)
-                    
-                    return {
-                        "success": True,
-                        "response": response.text,
-                        "agent_status": f"Agentic AI Synthesis (Model: {model_name})",
-                        "model": model_name,
-                        "timestamp": datetime.now().isoformat(),
-                        "language": language
-                    }
-                except Exception as e:
-                    last_error = str(e)
-                    print(f"⚠️  Model {model_name} failed: {last_error}")
-                    if "429" in last_error:
-                        continue # Try the next model
-                    break # Fatal error, stop trying
+                            final_msg = complete_system_prompt + "\n\n" + context_msg + message
+                            response = chat_session.send_message(final_msg)
+                            
+                            return {
+                                "success": True,
+                                "response": response.text,
+                                "agent_status": f"Agentic AI Synthesis (Model: {model_name})",
+                                "model": model_name,
+                                "timestamp": datetime.now().isoformat(),
+                                "key_rotation": "Using Backup Key" if api_key != settings.GEMINI_API_KEY else "Primary Key Active",
+                                "language": language
+                            }
+                        except Exception as model_err:
+                            last_error = str(model_err)
+                            print(f"⚠️  Model {model_name} with key {api_key[:6]}... failed: {last_error}")
+                            if "429" in last_error or "deadline" in last_error.lower():
+                                continue # Try the next model with this key
+                            break # Non-quota error, move to next key
+                            
+                except Exception as key_err:
+                    print(f"⚠️  Key rotation failed: {key_err}")
+                    continue # Try the next available key
 
             return {
                 "success": False,
-                "error": f"AI Council Busy (429). Please wait 10 seconds. (Details: {last_error})",
+                "error": f"AI Council Fully Busy (All Quotas Exceeded). Please wait 10 seconds. (Details: {last_error})",
                 "provider": "google_gemini_agent"
             }
         except Exception as e:
