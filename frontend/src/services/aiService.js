@@ -49,10 +49,9 @@ class aiService {
   constructor() {
     this.genAI = new GoogleGenerativeAI(API_KEY);
     this.models = [
-        DEFAULT_MODEL,
+        "gemini-1.5-flash",
         "gemini-1.5-pro",
-        "gemini-2.0-flash",
-        "gemini-pro"
+        "gemini-1.0-pro"
     ];
   }
 
@@ -112,7 +111,7 @@ class aiService {
       } catch (err) {
           lastError = err;
           console.warn(`⚠️ Model ${modelName} busy. Trying next...`, err.message);
-          if (err.message.includes("429") || err.message.includes("quota") || err.message.includes("deadline")) {
+          if (err.message.includes("429") || err.message.includes("quota") || err.message.includes("deadline") || err.message.includes("404") || err.message.includes("not found")) {
               continue;
           }
           break;
