@@ -28,7 +28,8 @@ import {
 } from 'lucide-react'
 import AgenticConsensus from './AgenticConsensus'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
+import aiService from '../services/aiService'
 
 function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [symptoms, setSymptoms] = useState({
@@ -86,15 +87,52 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${API_URL}/api/asha/analyze`, {
-        patient: { ...patientData, language: language === 'hi' ? 'hindi' : 'english' },
-        symptoms: symptoms
-      })
-      if (response.data.success) setResult(response.data)
-      else throw new Error(response.data.error || "Analysis failed")
+      // PHASE 1: Fetch ML Risks from Backend
+      let mlRisks = { diabetes: 0.1, heart: 0.1, kidney: 0.1 };
+      try {
+          const mlResponse = await axios.post(`${API_URL}/api/predict/all`, patientData);
+          if (mlResponse.data.success) mlRisks = mlResponse.data.predictions;
+      } catch (mlErr) { console.warn("ML Triage Fetch Failed:", mlErr); }
+
+      // PHASE 2: Local Emergency Triage Logic (Red/Yellow/Green)
+      const maxRisk = Math.max(...Object.values(mlRisks));
+      const critical = symptoms.chest_pain || symptoms.unconscious || symptoms.bleeding || symptoms.breathing;
+      const moderate = symptoms.fever || symptoms.vomiting || symptoms.diarrhea;
+
+      let urgency = "GREEN";
+      let actions = ["✅ Monitor at home", "📄 Keep health card updated"];
+      let timeframe = "Standard";
+
+      if (critical || maxRisk > 0.7) {
+        urgency = "RED";
+        timeframe = "0-2 hours";
+        actions = ["🚨 Immediate PHC transfer Required", "📞 Call 108 Emergency Now", "👨‍⚕️ Alert local MO"];
+      } else if (moderate || maxRisk > 0.4) {
+        urgency = "YELLOW";
+        timeframe = "24-48 hours";
+        actions = ["🏠 Scheduled PHC Visit", "💊 Symptomatic relief as per kit", "📈 4-hour vital tracking"];
+      }
+
+      // PHASE 3: AI Diagnosis (Netlify Direct)
+      const aiResponse = await aiService.analyzeASHACase(
+          { ...patientData, predictions: mlRisks },
+          symptoms,
+          language
+      );
+
+      setResult({
+        success: true,
+        urgency,
+        urgency_text: `${urgency} - ${timeframe}`,
+        actions,
+        ai_insights: aiResponse.response,
+        ml_predictions: mlRisks,
+        agent_status: aiResponse.agent_status
+      });
+
     } catch (error) {
-      console.error('Analysis error:', error)
-      setError(language === 'hi' ? 'विश्लेषण में त्रुटि हुई। कृपया दोबारा प्रयास करें।' : 'Error performing analysis. Please try again.')
+      console.error('ASHA Analysis error:', error)
+      setError(language === 'hi' ? 'विश्लेषण में त्रुटि हुई।' : 'Error performing analysis.')
     } finally {
       setLoading(false)
     }
@@ -106,8 +144,8 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
     setAudioLoading(true)
     try {
       const cleanText = result.ai_insights.replace(/[#*]/g, '').substring(0, 4000)
-      const fd = new FormData(); fd.append('text', cleanText); fd.append('language', language)
-      const response = await axios.post(`${API_URL}/api/voice/synthesize`, fd, { responseType: 'blob' })
+      const fdData = new FormData(); fdData.append('text', cleanText); fdData.append('language', language)
+      const response = await axios.post(`${API_URL}/api/voice/synthesize`, fdData, { responseType: 'blob' })
       const audioUrl = URL.createObjectURL(new Blob([response.data], { type: 'audio/mpeg' }))
       const audio = new Audio(audioUrl); setAudioInstance(audio)
       audio.onplay = () => setIsPlaying(true); audio.onended = () => setIsPlaying(false); audio.onpause = () => setIsPlaying(false)

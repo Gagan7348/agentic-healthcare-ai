@@ -19,7 +19,8 @@ import {
   Cpu
 } from 'lucide-react'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
+import aiService from '../services/aiService'
 
 function Prediction({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [formData, setFormData] = useState({
@@ -100,26 +101,31 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
         }))
         setResults(predsArray)
         const highRisk = predsArray.find(p => p.risk_level === 'high') || predsArray[0]
-        if (highRisk) handleExplain(highRisk.disease)
+        if (highRisk) handleExplain(highRisk.disease, highRisk.probability)
       } else {
         throw new Error("Invalid response")
       }
     } catch (error) {
       console.error('Prediction error:', error)
-      setError(language === 'hi' ? 'सर्वर से कनेक्ट नहीं हो पा रहा। कृपया सर्वर चालू करें।' : 'Could not connect to the server. Please ensure the backend is running.')
+      setError(language === 'hi' ? 'सर्वर से कनेक्ट नहीं हो पा रहा।' : 'Could not connect to the server.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleExplain = async (disease) => {
+  const handleExplain = async (disease, probability) => {
     setLoadingExplain(true)
     try {
-      const response = await axios.post(`${API_URL}/api/ai/explain/${disease}`, {
-        ...formData, language: language === 'hi' ? 'hindi' : 'english'
-      })
-      if (response.data.success) {
-        setExplanation({ text: response.data.response, disease })
+      // Direct-to-Gemini Explanation (Via Netlify Frontend Brain)
+      const response = await aiService.explainRisk(
+          disease,
+          probability,
+          formData,
+          language
+      );
+      
+      if (response.success) {
+          setExplanation({ text: response.response, disease })
       }
     } catch (error) {
       console.error('Explanation error:', error)

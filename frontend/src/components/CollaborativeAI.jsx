@@ -13,24 +13,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { API_URL } from "../config";
-
-const API_BASE = API_URL;
-
-const SAMPLE_PATIENT = {
-  age: 55, gender: "Male", glucose: 135, hba1c: 7.2, cholesterol: 220,
-  bp: 140, bmi: 28.5, creatinine: 1.1, smoking: 1,
-  family_history_diabetes: 1, family_history_heart: 1, language: "english"
-};
-
-const FIELDS = [
-  { key: "age", label: "Age", type: "number", unit: "yrs", icon: Info },
-  { key: "glucose", label: "Glucose", type: "number", unit: "mg/dL", icon: Zap },
-  { key: "hba1c", label: "HbA1c", type: "number", unit: "%", icon: Activity },
-  { key: "bp", label: "Blood Pressure", type: "number", unit: "mmHg", icon: Activity },
-  { key: "cholesterol", label: "Cholesterol", type: "number", unit: "mg/dL", icon: Activity },
-  { key: "bmi", label: "BMI", type: "number", unit: "kg/m²", icon: Activity },
-  { key: "creatinine", label: "Creatinine", type: "number", unit: "mg/dL", icon: Activity },
-];
+import aiService from "../services/aiService";
 
 export default function CollaborativeAI() {
   const [formData, setFormData] = useState(SAMPLE_PATIENT);
@@ -49,17 +32,15 @@ export default function CollaborativeAI() {
 
     try {
       setLoadingPhase("Coordinating Joint AI Council logic...");
-      const res = await fetch(`${API_BASE}/api/ai/collaborative-consensus`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patient_data: formData, language: formData.language })
-      });
+      // Direct-to-Gemini Collaborative Synthesis (Via Netlify Frontend Brain)
+      const data = await aiService.getCollaborativeConsensus(formData, formData.language);
       
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Analysis failed");
       
       setResult(data);
       setActiveTab("consensus");
     } catch (e) {
+      console.error("Collaborative AI error:", e);
       setError("Analysis coordination failed. Verify model connection.");
     } finally {
       setLoading(false);

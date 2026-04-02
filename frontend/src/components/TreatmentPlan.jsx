@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Clipboard, ShieldCheck, Zap, Heart, Calendar, Clock, AlertTriangle, ChevronRight, Activity, Beaker, Apple, Dumbbell, UserCheck, Microscope, Volume2, Pause, MessageSquare } from 'lucide-react'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
+import aiService from '../services/aiService'
 
 function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [plan, setPlan] = useState(null)
@@ -43,12 +44,17 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
   const generatePlan = async () => {
     try {
       setLoading(true)
-      const dataToSend = {
-        ...patientData,
-        language: language === 'hi' ? 'hindi' : language === 'en' ? 'english' : language
+      // Direct-to-Gemini Synthesis (Via Netlify Frontend Brain)
+      const response = await aiService.generateTreatmentPlan(
+          patientData,
+          language
+      );
+      
+      if (response.success) {
+          setPlan(response.response)
+      } else {
+          throw new Error(response.error || "Neural Link Failure")
       }
-      const response = await axios.post(`${API_URL}/api/ai/treatment-plan`, dataToSend)
-      setPlan(response.data.response)
     } catch (error) {
       console.error("Plan generation error:", error)
     } finally {
