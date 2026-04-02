@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { API_URL } from "../config";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = API_URL;
 
 const SEVERITY_CONFIG = {
   HIGH: { color: "#ef4444", bg: "#fef2f2", border: "#fca5a5", icon: "🔴", label: "HIGH RISK" },

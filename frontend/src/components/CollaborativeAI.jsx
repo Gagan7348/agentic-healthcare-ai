@@ -12,8 +12,9 @@ import {
   RefreshCcw,
   Sparkles
 } from "lucide-react";
+import { API_URL } from "../config";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = API_URL;
 
 const SAMPLE_PATIENT = {
   age: 55, gender: "Male", glucose: 135, hba1c: 7.2, cholesterol: 220,
