@@ -47,11 +47,11 @@ const languageMap = {
  */
 class aiService {
   constructor() {
-    this.genAI = new GoogleGenerativeAI(API_KEY);
+    // Force the stable 'v1' API version to avoid v1beta 404 errors
+    this.genAI = new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" });
     this.models = [
         "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-1.0-pro"
+        "gemini-1.5-pro"
     ];
   }
 
