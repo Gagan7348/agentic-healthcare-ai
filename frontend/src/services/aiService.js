@@ -73,11 +73,19 @@ class aiService {
       try {
         const model = this.genAI.getGenerativeModel({ model: modelName });
         
-        // Convert history for Gemini SDK
-        const geminiHistory = history.map(msg => ({
+        // Convert history for Gemini SDK (Must start with 'user' role)
+        let geminiHistory = history.map(msg => ({
           role: msg.role === 'user' ? 'user' : 'model',
           parts: [{ text: msg.content }]
         }));
+
+        // CRITICAL FIX: Gemini requires the first message to be from 'user'
+        const firstUserIndex = geminiHistory.findIndex(m => m.role === 'user');
+        if (firstUserIndex !== -1) {
+            geminiHistory = geminiHistory.slice(firstUserIndex);
+        } else {
+            geminiHistory = []; // No user messages yet
+        }
 
         const chat = model.startChat({
           history: geminiHistory,
