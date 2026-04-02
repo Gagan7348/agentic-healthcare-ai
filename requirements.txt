@@ -35,8 +35,7 @@ pydub==0.25.1
 gTTS==2.4.0
 
 # Audio Processing
-pyaudio==0.2.14
-wave==0.0.2
+# (pyaudio and wave removed as they require system-level portaudio not available on cloud servers)
 
 # Additional Utilities
 requests==2.31.0
