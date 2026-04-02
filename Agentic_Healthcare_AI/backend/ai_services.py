@@ -319,17 +319,30 @@ Desired Sections (translated to {language}):
 
 Make it highly conversational, expert, and empathetic. Provide "Full Detail"!
 """
-            # 3. Gemini Final Synthesis
+            # 3. Gemini Final Synthesis (Attempting to use Gemini to unite the results)
             result = HealthcareAI.chat_with_gemini(synthesis_prompt, patient_data, language=language)
             
             if result.get("success"):
                 return {
                     "success": True,
                     "response": result.get("response", ""),
-                    "gpt_raw": gpt_analysis, # Keep for debugging/UI if needed
+                    "gpt_raw": gpt_analysis, 
                     "risk_level": gpt_res.get("risk_level", "MODERATE"),
                     "model": "Dual-AI Collaborative Consensus (GPT-4o + Gemini)"
                 }
+            
+            # EMERGENCY FALLBACK: If Gemini is busy (429), don't show an error! 
+            # Return the GPT-4o analysis directly as the 'Expert Opinion'.
+            if "429" in str(result.get("error", "")) or not result.get("success"):
+                logger.warning("Gemini 429 encountered - Falling back to standalone GPT-4o response.")
+                return {
+                    "success": True,
+                    "response": f"### [SYSTEM NOTICE: AI Council Synthesis Busy - Providing Direct Expert Review]\n\n{gpt_analysis}",
+                    "gpt_raw": gpt_analysis,
+                    "risk_level": gpt_res.get("risk_level", "MODERATE"),
+                    "model": "GPT-4o Medical Specialist (Standalone)"
+                }
+            
             return result
 
         except Exception as e:
