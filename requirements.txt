@@ -26,7 +26,7 @@ google-generativeai>=0.7.2
 python-dotenv==1.0.0
 
 # Translation & Multilingual Support
-googletrans==4.0.0rc1
+googletrans==4.0.2
 langdetect==1.0.9
 
 # Voice - Speech Recognition
@@ -44,9 +44,6 @@ python-json-logger==2.0.7
 aiofiles==23.2.1
 
 # Agentic Multi-API Stack
-groq==0.4.2
-tavily-python==0.3.1
-phidata==2.4.10
 elevenlabs==0.2.27
 google-cloud-translate==3.12.1
 
