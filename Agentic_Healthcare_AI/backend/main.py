@@ -214,13 +214,79 @@ def make_prediction(disease: str, patient_data: PatientData) -> float:
         print(f"Prediction error for {disease}: {e}")
         return 0.0
 
-def make_all_predictions(patient_data: PatientData) -> Dict[str, float]:
-    """Make predictions for all diseases"""
+def apply_clinical_overrides(predictions: Dict[str, float], patient_data: PatientData) -> Dict[str, float]:
+    """
+    Apply evidence-based clinical threshold overrides.
+    Uses ADA, ACC/AHA, KDIGO guidelines to correct ML model edge cases.
+    """
+    bp = patient_data.bp or 120
+    glucose = patient_data.glucose or 90
+    hba1c = patient_data.hba1c or 5.4
+    creatinine = patient_data.creatinine or 1.0
+    bmi = patient_data.bmi or 22
+    cholesterol = patient_data.cholesterol or 180
+    age = patient_data.age or 30
+    family_dm = patient_data.family_history_diabetes or 0
+    family_hrt = patient_data.family_history_heart or 0
+
+    diabetes_risk = predictions.get('diabetes', 0.0)
+    heart_risk = predictions.get('heart', 0.0)
+    kidney_risk = predictions.get('kidney', 0.0)
+
+    # --- DIABETES OVERRIDES (ADA Guidelines) ---
+    if hba1c >= 6.5 or glucose >= 200:
+        diabetes_risk = max(diabetes_risk, 0.92)  # Diagnostic threshold
+    elif hba1c >= 5.7 or glucose >= 100:
+        diabetes_risk = max(diabetes_risk, 0.45)  # Pre-diabetes range
+    if family_dm and (hba1c >= 5.7 or glucose >= 100):
+        diabetes_risk = max(diabetes_risk, 0.65)  # Family history + pre-diabetes
+    if bmi >= 30 and (hba1c >= 6.0 or glucose >= 140):
+        diabetes_risk = max(diabetes_risk, 0.75)  # Obesity + elevated glucose
+
+    # --- CARDIOVASCULAR OVERRIDES (ACC/AHA Guidelines) ---
+    if bp >= 180:  # Stage 2 Hypertension Crisis
+        heart_risk = max(heart_risk, 0.88)
+    elif bp >= 160:  # Stage 2 Hypertension
+        heart_risk = max(heart_risk, 0.72)
+    elif bp >= 140:  # Stage 1 Hypertension
+        heart_risk = max(heart_risk, 0.55)
+    if cholesterol >= 240:  # High cholesterol
+        heart_risk = max(heart_risk, 0.60)
+    elif cholesterol >= 200:
+        heart_risk = max(heart_risk, 0.40)
+    if age >= 65 and bp >= 140:
+        heart_risk = max(heart_risk, 0.78)  # Age + hypertension compound risk
+    if family_hrt and age >= 45:
+        heart_risk = max(heart_risk, 0.55)  # Family history compound
+    if bp >= 140 and cholesterol >= 220 and age >= 55:
+        heart_risk = max(heart_risk, 0.82)  # Triple compound risk
+
+    # --- KIDNEY OVERRIDES (KDIGO Guidelines) ---
+    if creatinine >= 2.0:  # Significantly elevated
+        kidney_risk = max(kidney_risk, 0.80)
+    elif creatinine >= 1.5:
+        kidney_risk = max(kidney_risk, 0.55)
+    if diabetes_risk >= 0.7 and creatinine >= 1.2:
+        kidney_risk = max(kidney_risk, 0.65)  # Diabetic nephropathy risk
+    if bp >= 160 and creatinine >= 1.3:
+        kidney_risk = max(kidney_risk, 0.70)  # Hypertensive nephropathy
+
     return {
+        'diabetes': min(diabetes_risk, 0.98),
+        'heart': min(heart_risk, 0.98),
+        'kidney': min(kidney_risk, 0.98)
+    }
+
+
+def make_all_predictions(patient_data: PatientData) -> Dict[str, float]:
+    """Make predictions for all diseases with clinical threshold validation"""
+    raw_predictions = {
         'diabetes': make_prediction('diabetes', patient_data),
         'heart': make_prediction('heart', patient_data),
         'kidney': make_prediction('kidney', patient_data)
     }
+    # Apply evidence-based overrides to handle ML edge cases
+    return apply_clinical_overrides(raw_predictions, patient_data)
 
 # ============================================================================
 # API Endpoints

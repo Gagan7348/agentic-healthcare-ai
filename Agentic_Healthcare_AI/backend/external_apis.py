@@ -25,10 +25,16 @@ async def check_drug_interactions(drugs: List[str], api_key: str = "") -> Dict:
     async with httpx.AsyncClient(timeout=15) as client:
         for drug in drugs[:5]:  # limit to 5 drugs per call
             try:
+                # Use broader search: brand name OR generic name to get real data
+                search_query = (
+                    f'patient.drug.openfda.brand_name:"{drug}" '
+                    f'OR patient.drug.openfda.generic_name:"{drug}" '
+                    f'OR patient.drug.medicinalproduct:"{drug}"'
+                )
                 params = {
-                    "search": f"patient.drug.medicinalproduct:\"{drug}\"",
+                    "search": search_query,
                     "count": "patient.reaction.reactionmeddrapt.exact",
-                    "limit": "8",
+                    "limit": "10",
                 }
                 if api_key:
                     params["api_key"] = api_key
@@ -36,17 +42,24 @@ async def check_drug_interactions(drugs: List[str], api_key: str = "") -> Dict:
                 resp = await client.get(f"{OPENFDA_BASE}/drug/event.json", params=params)
                 if resp.status_code == 200:
                     data = resp.json()
+                    events = data.get("results", [])
+                    # Each event in a count query has 'term' and 'count' keys
+                    formatted_events = [
+                        {"term": e.get("term", ""), "count": e.get("count", 0)}
+                        for e in events[:10]
+                    ]
+                    total = data.get("meta", {}).get("results", {}).get("total", 0)
                     results.append({
                         "drug": drug,
-                        "top_adverse_events": data.get("results", [])[:8],
-                        "total_reports": data.get("meta", {}).get("results", {}).get("total", 0)
+                        "top_adverse_events": formatted_events,
+                        "total_reports": total
                     })
                 elif resp.status_code == 404:
                     results.append({"drug": drug, "top_adverse_events": [], "total_reports": 0})
                 else:
-                    results.append({"drug": drug, "error": f"HTTP {resp.status_code}"})
+                    results.append({"drug": drug, "error": f"HTTP {resp.status_code}", "total_reports": 0, "top_adverse_events": []})
             except Exception as e:
-                results.append({"drug": drug, "error": str(e)})
+                results.append({"drug": drug, "error": str(e), "total_reports": 0, "top_adverse_events": []})
 
     # Determine severity
     severity = "LOW"

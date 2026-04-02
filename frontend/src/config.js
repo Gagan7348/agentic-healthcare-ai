@@ -1,2 +1,3 @@
-// Centralized API configuration for production deployment
-export const API_URL = import.meta.env.VITE_API_URL || 'https://api-health-ai.loca.lt';
+// Centralized API configuration
+// Uses environment variable in production (Netlify/Render), falls back to localhost for development
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';

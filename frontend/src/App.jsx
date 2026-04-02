@@ -68,23 +68,37 @@ function App() {
   }, [navigate])
 
   // Translation keys for navigation
+  const LANG_LABELS = {
+    en: { dashboard: 'Dashboard', screening: 'Health Screening', reports: 'Medical Reports', community: 'Community Health', care: 'Care Protocols', diagnostics: 'Diagnostics', ai: 'AI Consultation', voice: 'Voice Assistant', patients: 'Patient Records', drugs: 'Drug Checker', consensus: 'Joint Consensus' },
+    hi: { dashboard: 'डैशबोर्ड', screening: 'स्वास्थ्य जांच', reports: 'मेडिकल रिपोर्ट', community: 'सामुदायिक स्वास्थ्य', care: 'देखभाल प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI परामर्श', voice: 'आवाज़ सहायक', patients: 'रोगी रिकॉर्ड', drugs: 'दवाई जांचक', consensus: 'संयुक्त सलाह' },
+    bn: { dashboard: 'ড্যাশবোর্ড', screening: 'স্বাস্থ্য পরীক্ষা', reports: 'মেডিকেল রিপোর্ট', community: 'সমাজ স্বাস্থ্য', care: 'যত্ন প্রোটোকল', diagnostics: 'ডায়াগনস্টিক্স', ai: 'AI পরামর্শ', voice: 'ভয়েস সহায়ক', patients: 'রোগীর রেকর্ড', drugs: 'ড্রাগ চেকার', consensus: 'যৌথ পরামর্শ' },
+    ta: { dashboard: 'டாஷ்போர்டு', screening: 'சுகாதார பரிசோதனை', reports: 'மருத்துவ அறிக்கைகள்', community: 'சமுதாய சுகாதாரம்', care: 'சிகிச்சை நெறிமுறைகள்', diagnostics: 'நோயறிதல்', ai: 'AI ஆலோசனை', voice: 'குரல் உதவியாளர்', patients: 'நோயாளி பதிவுகள்', drugs: 'மருந்து சரிபார்ப்பு', consensus: 'கூட்டு ஒருமித்த கருத்து' },
+    te: { dashboard: 'డాష్‌బోర్డ్', screening: 'ఆరోగ్య స్క్రీనింగ్', reports: 'వైద్య నివేదికలు', community: 'సమాజ ఆరోగ్యం', care: 'సంరక్షణ ప్రోటోకాల్', diagnostics: 'రోగ నిర్ధారణ', ai: 'AI సంప్రదింపులు', voice: 'వాయిస్ అసిస్టెంట్', patients: 'రోగి రికార్డులు', drugs: 'డ్రగ్ చెకర్', consensus: 'సంయుక్త ఏకాభిప్రాయం' },
+    mr: { dashboard: 'डॅशबोर्ड', screening: 'आरोग्य तपासणी', reports: 'वैद्यकीय अहवाल', community: 'सामुदायिक आरोग्य', care: 'काळजी प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI सल्लामसलत', voice: 'व्हॉइस सहाय्यक', patients: 'रुग्ण नोंदी', drugs: 'औषध तपासक', consensus: 'संयुक्त सहमती' },
+    gu: { dashboard: 'ડૅશબોર્ડ', screening: 'આrોગ્ય સ્ક્રીનિંગ', reports: 'તbibical અહેવાલ', community: 'સamudayic આrોગ્ય', care: 'સeवा P&T', diagnostics: 'ઔ&P', ai: 'AI', voice: 'વaice', patients: 'Dvo', drugs: 'Drug', consensus: 'Consensus' },
+    kn: { dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', screening: 'ಆರೋಗ್ಯ ತಪಾಸಣೆ', reports: 'ವೈದ್ಯಕೀಯ ವರದಿ', community: 'ಸಮುದಾಯ ಆರೋಗ್ಯ', care: 'ಆರೈಕೆ ನಿಯಮಾವಳಿ', diagnostics: 'ರೋಗನಿರ್ಣಯ', ai: 'AI ಸಲಹೆ', voice: 'ಧ್ವನಿ ಸಹಾಯಕ', patients: 'ರೋಗಿ ದಾಖಲಾತಿ', drugs: 'ಔಷಧ ಪರೀಕ್ಷಕ', consensus: 'ಸಂಯುಕ್ತ ಒಮ್ಮತ' },
+    ml: { dashboard: 'ഡാഷ്ബോർഡ്', screening: 'ആരോഗ്യ സ്ക്രീനിംഗ്', reports: 'മെഡിക്കൽ റിപ്പോർട്ടുകൾ', community: 'സാമുദായിക ആരോഗ്യം', care: 'പരിചരണ നിർദ്ദേശങ്ങൾ', diagnostics: 'ഡയഗ്നോസ്റ്റിക്സ്', ai: 'AI കൺസൾട്ടേഷൻ', voice: 'ശബ്ദ സഹായി', patients: 'രോഗിയുടെ രേഖകൾ', drugs: 'മരുന്ന് പരിശോധകൻ', consensus: 'സംയുക്ത സമ്മതം' },
+    pa: { dashboard: 'ਡੈਸ਼ਬੋਰਡ', screening: 'ਸਿਹਤ ਜਾਂਚ', reports: 'ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ', community: 'ਸਮਾਜਿਕ ਸਿਹਤ', care: 'ਦੇਖਭਾਲ ਪ੍ਰੋਟੋਕੋਲ', diagnostics: 'ਡਾਇਗਨੌਸਟਿਕਸ', ai: 'AI ਸਲਾਹ', voice: 'ਆਵਾਜ਼ ਸਹਾਇਕ', patients: 'ਮਰੀਜ਼ ਰਿਕਾਰਡ', drugs: 'ਦਵਾਈ ਜਾਂਚਕਰਤਾ', consensus: 'ਸਾਂਝੀ ਸਹਿਮਤੀ' }
+  }
+  const L = LANG_LABELS[language] || LANG_LABELS.en
+
   const tabs = {
     en: [
-      { key: 'home', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview of clinical operations' },
-      { key: 'predict', label: 'Health Screening', icon: Activity, desc: 'Patient risk assessment' },
-      { key: 'report', label: 'Medical Reports', icon: FileText, desc: 'Clinical document analysis' },
-      { key: 'asha', label: 'Community Health', icon: Stethoscope, desc: 'Rural health coordinator' },
-      { key: 'plan', label: 'Care Protocols', icon: Clipboard, desc: 'Treatment guidelines' },
-      { key: 'workflow', label: 'Diagnostics', icon: TrendingUp, desc: 'Clinical decision support' },
-      { key: 'chat', label: 'AI Consultation', icon: MessageSquare, desc: 'Multi-agent clinical review' },
-      { key: 'voice', label: 'Voice Assistant', icon: Mic, desc: 'Voice-enabled control' },
-      { key: 'patients', label: 'Patient Records', icon: Users, desc: 'Management of patient data' },
-      { key: 'drugs', label: 'Drug Checker', icon: Zap, desc: 'Drug interaction analysis' },
-      { key: 'second-opinion', label: 'Joint Consensus', icon: Layers, desc: 'Collaborative AI review' },
+      { key: 'home', label: L.dashboard, icon: LayoutDashboard, desc: 'Overview of clinical operations' },
+      { key: 'predict', label: L.screening, icon: Activity, desc: 'Patient risk assessment' },
+      { key: 'report', label: L.reports, icon: FileText, desc: 'Clinical document analysis' },
+      { key: 'asha', label: L.community, icon: Stethoscope, desc: 'Rural health coordinator' },
+      { key: 'plan', label: L.care, icon: Clipboard, desc: 'Treatment guidelines' },
+      { key: 'workflow', label: L.diagnostics, icon: TrendingUp, desc: 'Clinical decision support' },
+      { key: 'chat', label: L.ai, icon: MessageSquare, desc: 'Multi-agent clinical review' },
+      { key: 'voice', label: L.voice, icon: Mic, desc: 'Voice-enabled control' },
+      { key: 'patients', label: L.patients, icon: Users, desc: 'Management of patient data' },
+      { key: 'drugs', label: L.drugs, icon: Zap, desc: 'Drug interaction analysis' },
+      { key: 'second-opinion', label: L.consensus, icon: Layers, desc: 'Collaborative AI review' },
     ]
   }
 
-  const currentTabs = tabs[language] || tabs.en
+  const currentTabs = tabs.en
 
   return (
     <div className={`h-screen overflow-hidden ${isDarkMode ? 'dark' : ''} font-sans selection:bg-indigo-500/30`}>
