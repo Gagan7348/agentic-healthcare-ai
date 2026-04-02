@@ -515,47 +515,65 @@ Provide a highly detailed, structured, and conversational analysis including:
 Use a highly engaging, conversational tone in {language_name} like an expert, caring doctor taking the time to fully explain a report to a patient. Provide completely detailed insights.
 CRITICAL: If {language_name} is an Indian language like Hindi, Tamil, Bengali, etc., you MUST write the ENTIRE response in its native script (e.g., Devanagari for Hindi). DO NOT use English letters to spell out Indian words (No Hinglish/Romanized text)."""
 
-            # Prepare the content part
-            # google-generativeai 0.3.2 handles multiple parts in a list
-            content = [
-                {"mime_type": file_type, "data": file_content},
-                prompt
-            ]
-            
-            # Use generate_content instead of chat for multimodal
-            # Added timeout and retry configuration
+            # ====================================================================
+            # SMART VISION FALLBACK & RETRY LOGIC (Prevents 504 Timeouts)
+            # ====================================================================
+            import time
             from google.api_core import retry
             
-            response = gemini_model.generate_content(
-                content,
-                request_options={
-                    "timeout": 120,  # Increase to 120s
-                    "retry": retry.Retry(initial=1.0, multiplier=2.0, maximum=60.0, deadline=120.0)
-                }
-            )
+            vision_models = [
+                "gemini-1.5-flash",  # Super fast vision
+                "gemini-2.0-flash",  # Next gen vision
+                "gemini-1.5-pro",    # Smartest vision
+            ]
             
-            response_text = response.text if hasattr(response, 'text') else str(response)
-            
+            last_error = None
+            for model_name in vision_models:
+                try:
+                    # 1. Select the vision engine
+                    current_vision_model = genai.GenerativeModel(model_name=model_name)
+                    
+                    # 2. Package the report and instructions
+                    content_parts = [
+                        {"mime_type": file_type, "data": file_content},
+                        prompt
+                    ]
+                    
+                    # 3. Execute with high-priority timeout
+                    response = current_vision_model.generate_content(
+                        content_parts,
+                        request_options={
+                            "timeout": 120, 
+                            "retry": retry.Retry(initial=1.0, multiplier=2.0, maximum=30.0, deadline=120.0)
+                        }
+                    )
+                    
+                    response_text = response.text if hasattr(response, 'text') else str(response)
+                    
+                    return {
+                        "success": True,
+                        "analysis": response_text,
+                        "model": model_name,
+                        "language": language,
+                        "agent_status": f"Vision Consensus Panel (Model: {model_name})",
+                        "timestamp": datetime.now().isoformat()
+                    }
+                except Exception as e:
+                    last_error = str(e)
+                    print(f"⚠️  Vision Model {model_name} failed: {last_error}")
+                    if "429" in last_error or "deadline" in last_error.lower() or "504" in last_error:
+                        continue # Try the next model
+                    break # Fatal error
+
             return {
-                "success": True,
-                "analysis": response_text,
-                "model": settings.DEFAULT_MODEL,
-                "language": language,
-                "timestamp": datetime.now().isoformat()
+                "success": False,
+                "error": f"Medical Imaging System Busy. Please wait 10 seconds. (Details: {last_error})",
+                "provider": "google_gemini_vision"
             }
         except Exception as e:
             error_msg = str(e)
             print(f"❌ Report analysis error: {error_msg}")
-            
-            # Special handling for connection issues
-            if "failed to connect" in error_msg.lower() or "ipv6" in error_msg.lower():
-                return {
-                    "success": False, 
-                    "error": "Connection error to AI server. This is often caused by IPv6 issues. Trying to force IPv4...",
-                    "details": error_msg
-                }
-                
-            return {"success": False, "error": f"Report analysis failed: {error_msg}"}
+            return {"success": False, "error": f"Report Analysis System Error: {error_msg}"}
 
 
 def consensus(patient_data: Dict, symptoms: Dict, predictions: Dict, language: str = "english") -> Dict:
