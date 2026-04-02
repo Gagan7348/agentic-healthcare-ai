@@ -3,6 +3,7 @@ import axios from 'axios'
 import { MessageSquare, Send, Sparkles, User, Brain, AlertCircle, RefreshCcw, Zap, Terminal, ShieldAlert, Activity, Volume2, Pause } from 'lucide-react'
 
 import { API_URL } from '../config'
+import aiService from '../services/aiService'
 
 function AIChat({ language = 'en', selectedPatient = null, chatContext = null, clearContext = () => {}, onNavigate = () => {} }) {
   const [messages, setMessages] = useState([
@@ -38,21 +39,49 @@ function AIChat({ language = 'en', selectedPatient = null, chatContext = null, c
     setError(null)
 
     try {
-      const response = await axios.post(`${API_URL}/api/ai/chat`, {
-        message: textToSend,
-        language,
-        history: messages // Now supported by updated backend
-      })
+      // PHASE 1: Fetch Clinical ML Risks from Render Backend
+      let mlRisks = null;
+      if (selectedPatient) {
+          try {
+              const mlResponse = await axios.post(`${API_URL}/api/predict/all`, {
+                  age: patientData.age,
+                  gender: selectedPatient.gender === 1 ? 'Female' : 'Male',
+                  glucose: patientData.glucose,
+                  hba1c: patientData.hba1c,
+                  bp: patientData.bp,
+                  bmi: patientData.bmi,
+                  creatinine: selectedPatient.creatinine || 1.0,
+                  cholesterol: selectedPatient.cholesterol || 180,
+                  smoking: selectedPatient.smoking || 0,
+                  physical_activity: selectedPatient.physical_activity || 0,
+                  family_history_diabetes: selectedPatient.family_history_diabetes || 0,
+                  family_history_heart: selectedPatient.family_history_heart || 0
+              });
+              if (mlResponse.data.success) {
+                  mlRisks = mlResponse.data.predictions;
+              }
+          } catch (mlErr) {
+              console.warn("ML Risk Fetch Failed:", mlErr);
+          }
+      }
+
+      // PHASE 2: Direct-to-Gemini Synthesis (Via Netlify Frontend Brain)
+      const response = await aiService.chatWithAI(
+          textToSend,
+          mlRisks ? { ...patientData, predictions: mlRisks } : patientData,
+          messages,
+          language
+      );
       
-      if (response.data.success) {
+      if (response.success) {
         const assistantMessage = { 
           role: 'assistant', 
-          content: response.data.response || "SYNTAX_ERROR: NULL_RESPONSE",
-          agent_status: response.data.agent_status
+          content: response.response,
+          agent_status: response.agent_status
         }
         setMessages(prev => [...prev, assistantMessage])
       } else {
-        throw new Error(response.data.error || "Neural Link Failure")
+        throw new Error(response.error || "Neural Link Failure")
       }
     } catch (error) {
       console.error('Chat error:', error)

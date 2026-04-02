@@ -381,6 +381,26 @@ async def predict(patient: PatientData):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# ML PREDICTION ENDPOINTS
+# ============================================================================
+
+@app.post("/api/predict/all")
+async def predict_all_endpoint(patient_data: PatientData):
+    """
+    Standalone high-speed ML prediction endpoint.
+    Used by the frontend to fetch clinical risks for AI synthesis.
+    """
+    try:
+        predictions = make_all_predictions(patient_data)
+        return {
+            "success": True,
+            "predictions": predictions,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# ============================================================================
 # GEMINI AI ENDPOINTS
 # ============================================================================
 

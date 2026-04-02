@@ -1,0 +1,13 @@
+{
+  "total_patients": 10000,
+  "models_trained": [
+    "diabetes",
+    "heart_disease",
+    "kidney_disease"
+  ],
+  "accuracies": {
+    "diabetes": 0.851,
+    "heart_disease": 0.9265,
+    "kidney_disease": 0.946
+  }
+}

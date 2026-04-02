@@ -23,7 +23,8 @@ import {
   Globe
 } from 'lucide-react'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
+import aiService from '../services/aiService'
 
 function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [file, setFile] = useState(null)
@@ -59,14 +60,25 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      if (response.data.success) setAnalysis(response.data.analysis)
-      else throw new Error(response.data.error || "Neural Link Failure")
+      // Direct-to-Gemini Vision Analysis (Via Netlify Frontend Brain)
+      const response = await aiService.analyzeReport(
+          file, 
+          file.type, 
+          language
+      );
+      
+      if (response.success) {
+          setAnalysis(response.analysis)
+      } else {
+        throw new Error(response.error || "Neural Link Failure")
+      }
     } catch (err) {
       console.error('Analysis error:', err)
-      setError(err.message || "Failed to analyze report")
+      const errorText = err.message.includes('quota') || err.message.includes('limit')
+        ? (language === 'hi' ? 'Gemini AI का कोटा समाप्त हो गया है।' : 'Neural Quota Exceeded.')
+        : (language === 'hi' ? 'रिपोर्ट विश्लेषण विफल रहा' : 'Report Analysis Failed')
+      
+      setError(errorText)
     } finally {
       setLoading(false)
     }
