@@ -35,9 +35,8 @@ class Settings:
     GEMINI_FLASH: str = "gemini-1.5-flash"      # Fastest - $0.000075/1K chars
     GEMINI_PRO_VISION: str = "gemini-1.5-pro-vision"  # For images
     
-    # Default model to use
-    DEFAULT_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # Free tier!
-    
+    # Default model to use (1.5 Flash is highly stable and has huge free-tier limits)
+    DEFAULT_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")      
     # ========================================
     # AI PARAMETERS
     # ========================================
@@ -66,6 +65,8 @@ class Settings:
         "http://127.0.0.1:3004",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8501",
+        "https://agentic-healthcare-ai.onrender.com",
+        "https://agentic-healthcare-ui.onrender.com", 
     ]
     
     # ========================================
