@@ -273,6 +273,44 @@ Key Guidelines:
                     print(f"⚠️  Key rotation failed: {key_err}")
                     continue # Try the next available key
 
+            # ====================================================================
+            # UNIVERSAL EMERGENCY FALLBACK: GPT-4o SPECIALIST (Ensures 100% Uptime)
+            # ====================================================================
+            try:
+                print("🚨 All Gemini Council Keys Busy - Falling back to GPT-4o Specialist...")
+                from .openai_service import get_openai_client
+                client = get_openai_client()
+                if client:
+                    messages = [{"role": "system", "content": complete_system_prompt}]
+                    if history:
+                        for msg in history:
+                            messages.append({"role": "user" if msg.get('role') == 'user' else "assistant", "content": msg.get('content')})
+                    
+                    context_msg = ""
+                    if patient_context:
+                        # Clean patient data for privacy/logic (Exclude predictions if already in message)
+                        context_msg = "Patient context: " + json.dumps({k:v for k,v in patient_context.items() if k != 'predictions'})
+                    
+                    messages.append({"role": "user", "content": context_msg + "\n\nUser Query: " + message})
+                    
+                    response = await client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=messages,
+                        max_tokens=1500,
+                        temperature=0.3
+                    )
+                    
+                    return {
+                        "success": True,
+                        "response": f"### [SYSTEM NOTICE: AI Council Synthesis Busy - Providing Direct Expert Review]\n\n{response.choices[0].message.content}",
+                        "agent_status": "GPT-4o Medical Specialist (Standalone)",
+                        "model": "gpt-4o",
+                        "timestamp": datetime.now().isoformat(),
+                        "language": language
+                    }
+            except Exception as gpt_err:
+                print(f"❌ OpenAI Fallback also failed: {gpt_err}")
+
             return {
                 "success": False,
                 "error": f"AI Council Fully Busy (All Quotas Exceeded). Please wait 10 seconds. (Details: {last_error})",
