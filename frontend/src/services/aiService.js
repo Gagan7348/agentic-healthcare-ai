@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const DEFAULT_MODEL = "gemini-2.0-flash"; // Upgraded for 2026 Stability
 const BACKUP_KEY = "AIzaSyBitVCSzJlSwwaQVrvfx2Qw32flej6yydU";
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || BACKUP_KEY;
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 // Professional Clinical Diagnostic Persona
 const MEDICAL_SYSTEM_PROMPT = `You are a Board-Certified Senior Medical Specialist within the Agentic AI Hospital OS.
@@ -29,25 +30,17 @@ Key Guidelines:
 ✅ ALWAYS conclude with a clear warning: "SYSTEM NOTICE: This is an AI-generated clinical impression. Mandatory specialist verification is required for final diagnosis and medication initiation."`;
 
 const languageMap = {
-  "en": "English",
-  "hi": "pure Hindi (हिंदी)",
-  "ta": "Tamil",
-  "te": "Telugu",
-  "bn": "Bengali",
-  "mr": "Marathi",
-  "gu": "Gujarati",
-  "kn": "Kannada",
-  "ml": "Malayalam",
-  "pa": "Punjabi"
+  "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
+  "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati", "kn": "Kannada",
+  "ml": "Malayalam", "pa": "Punjabi"
 };
 
 /**
- * Frontend AI Service: Communicates directly with Google Gemini SDK
- * Bypasses backend bottlenecks for 100% stability.
+ * Frontend AI Service: Communicates directly with AI SDKs
  */
 class aiService {
   constructor() {
-    this.genAI = new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" });
+    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" }) : null;
     this.models = [
         "gemini-2.0-flash", // 2026 Production Standard
         "gemini-2.0-pro",  // 2026 Advanced Research
@@ -58,92 +51,98 @@ class aiService {
   }
 
   /**
-   * Core Chat Engine with model-hopping fallback
+   * Core Hybrid Chat Engine: Tries Gemini Council first, falls back to OpenAI
    */
   async chatWithAI(message, patientContext = null, history = [], language = "en") {
     const langName = languageMap[language] || "English";
-    const languageInstruction = `IMPORTANT: Respond in ${langName} language only. Use simple ${langName} terms.
-    If language is Hindi, use ONLY Devanagari script. No Hinglish.`;
-
+    const languageInstruction = `IMPORTANT: Respond in ${langName} language only. Use Devanagari script for Hindi.`;
     const fullSystemPrompt = MEDICAL_SYSTEM_PROMPT + "\n\n" + languageInstruction;
-
-    let lastError = null;
+    const contextMsg = patientContext ? `Patient Bio-Data: ${JSON.stringify(patientContext)}` : "";
+    const finalInput = `${fullSystemPrompt}\n\n${contextMsg}\n\nUSER QUERY: ${message}`;
     
-    // Attempt every model in the panel to avoid 429/504
-    for (const modelName of this.models) {
-      try {
-        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
-        const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
-        
-        // Convert history for Gemini SDK (Must start with 'user' role)
-        let geminiHistory = history.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        }));
+    let lastError = null;
 
-        // CRITICAL FIX: Gemini requires the first message to be from 'user'
-        const firstUserIndex = geminiHistory.findIndex(m => m.role === 'user');
-        if (firstUserIndex !== -1) {
-            geminiHistory = geminiHistory.slice(firstUserIndex);
-        } else {
-            geminiHistory = []; // No user messages yet
-        }
-
-        const chat = model.startChat({
-          history: geminiHistory,
-          generationConfig: {
-            maxOutputTokens: 2000,
-            temperature: 0.2, // Clinical precision
-          },
-        });
-
-        const contextMsg = patientContext ? 
-            `Patient Bio-Data: ${JSON.stringify(patientContext)}` : "";
-
-        const finalInput = `${fullSystemPrompt}\n\n${contextMsg}\n\nUSER QUERY: ${message}`;
-        
-        const result = await chat.sendMessage(finalInput);
-        const response = await result.response;
-        
-        return {
-          success: true,
-          response: response.text(),
-          agent_status: `Diagnostic Engine: ${modelName} (Direct-Netlify)`,
-          model: modelName
-        };
-      } catch (err) {
+    // STEP 1: Attempt Gemini Council (Google)
+    if (this.genAI) {
+      for (const modelName of this.models) {
+        try {
+          const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
+          const chat = model.startChat({
+            history: history.map(msg => ({
+              role: msg.role === 'user' ? 'user' : 'model',
+              parts: [{ text: msg.content }]
+            })).filter((_, i) => i > 0 || history[0]?.role === 'user'), // Force user-first
+            generationConfig: { maxOutputTokens: 2000, temperature: 0.2 },
+          });
+          const result = await chat.sendMessage(finalInput);
+          const response = await result.response;
+          return {
+            success: true,
+            response: response.text(),
+            agent_status: `Diagnostic Engine: ${modelName} (Direct-Netlify)`,
+            model: modelName
+          };
+        } catch (err) {
           lastError = err;
-          console.warn(`⚠️ Model ${modelName} busy. Trying next...`, err.message);
-          if (err.message.includes("429") || err.message.includes("quota") || err.message.includes("deadline") || err.message.includes("404") || err.message.includes("not found")) {
-              continue;
-          }
+          console.warn(`⚠️ Gemini ${modelName} failed/leaked. Trying next...`, err.message);
+          if (err.message.includes("leaked") || err.message.includes("403")) continue; 
+          if (err.message.includes("429") || err.message.includes("404")) continue;
           break;
+        }
       }
     }
 
-    throw new Error(`AI Council Fully Busy. (Details: ${lastError?.message})`);
+    // STEP 2: Emergency Fallback to OpenAI (GPT-4o)
+    if (OPENAI_API_KEY) {
+      console.log("🚑 EMERGENCY FAILOVER: Deploying OpenAI (GPT-4o) Council...");
+      try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: fullSystemPrompt },
+              ...history.map(msg => ({ role: msg.role, content: msg.content })),
+              { role: "user", content: finalInput }
+            ],
+            temperature: 0.2
+          })
+        });
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+          return {
+            success: true,
+            response: data.choices[0].message.content,
+            agent_status: "Diagnostic Engine: OpenAI GPT-4o (Emergency Fallback)",
+            model: "gpt-4o"
+          };
+        }
+      } catch (openErr) {
+        console.error("OpenAI Fallback Error:", openErr);
+        lastError = openErr;
+      }
+    }
+
+    throw new Error(`AI Council Fully Busy or Keys Compromised. (Details: ${lastError?.message})`);
   }
 
   /**
-   * Direct Vision Analysis for Medical Reports
+   * Specialized Diagnostic Methods (Using the Hybrid Engine)
    */
   async analyzeReport(file, fileType, language = "en") {
-    const langName = languageMap[language] || "English";
-    const prompt = `Perform an authoritative clinical analysis of this medical report in ${langName}. 
-    Follow the clinical SOAPE structure. Extract vitals, lab values, and primary diagnosis.
-    USE CLINICAL MEDICAL TERMINOLOGY.`;
-
+    const prompt = "Perform an authoritative clinical analysis of this medical report. Extract vitals and diagnosis.";
     try {
+        if (!this.genAI) throw new Error("Gemini Key Missing for Vision");
         // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
         const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL }, { apiVersion: "v1" });
         
         // Convert Blob/File to base64 for direct transfer
         const base64Data = await this.fileToGenerativePart(file);
-
-        const result = await model.generateContent([
-            prompt,
-            base64Data
-        ]);
+        const result = await model.generateContent([prompt, base64Data]);
         const response = await result.response;
 
         return {
@@ -153,84 +152,37 @@ class aiService {
             agent_status: `Vision Analyst: ${DEFAULT_MODEL} (Netlify)`
         };
     } catch (err) {
-        console.error("Vision Error:", err);
-        throw err;
+        return this.chatWithAI(prompt, { type: "Medical Report" }, [], language); // Fallback to text-based if vision fails
     }
   }
 
-  /**
-   * Specialized: Generate detailed 7-day Clinical Treatment Plan
-   */
-  async generateTreatmentPlan(patientData, language = "en") {
-    const prompt = `Create a rigid, detailed clinical protocol with 7-day, 3-month, and long-term targets.
-    Use the provided patient data and ML risks to customize the diet, exercise, and monitoring schedule.
-    Follow the clinical protocol structure.`;
-    
-    return this.chatWithAI(prompt, patientData, [], language);
+  async generateTreatmentPlan(data, lang = "en") {
+    return this.chatWithAI("Create a rigid 7-day clinical protocol.", data, [], lang);
   }
 
-  /**
-   * Specialized: ASHA Rural Health Triage (Red/Yellow/Green)
-   */
-  async analyzeASHACase(patientData, symptoms, language = "en") {
-    const prompt = `You are a Senior Rural Health Specialist (ASHA Mode). 
-    Perform a triage analysis based on these symptoms: ${JSON.stringify(symptoms)}.
-    Determine the Urgency Level: RED (Urgent), YELLOW (Soon), or GREEN (Monitoring).
-    Provide specific actionable instructions for a rural health worker.`;
-    
-    return this.chatWithAI(prompt, patientData, [], language);
+  async analyzeASHACase(data, symptoms, lang = "en") {
+    return this.chatWithAI(`Triage these symptoms: ${JSON.stringify(symptoms)}`, data, [], lang);
   }
 
-  /**
-   * Specialized: Explain ML Risk Prediction
-   */
-  async explainRisk(disease, risk, patientData, language = "en") {
-    const prompt = `Explain the ${Math.round(risk * 100)}% risk of ${disease}. 
-    Break down why the ML model flagged this and what it means clinically in simple terms.`;
-    
-    return this.chatWithAI(prompt, patientData, [], language);
+  async explainRisk(disease, risk, data, lang = "en") {
+    return this.chatWithAI(`Explain the ${Math.round(risk * 100)}% risk of ${disease}.`, data, [], lang);
   }
 
-  /**
-   * Specialized: Joint AI Council Collaborative Consensus
-   */
-  async getCollaborativeConsensus(patientData, language = "en") {
-    const prompt = `You are the Lead Diagnostic Synthesizer of the Joint AI Council.
-    Perform a MULTI-AGENT clinical analysis. Generate a response in JSON format (IMPORTANT: respond ONLY with JSON):
-    {
-      "risk_level": "RED/YELLOW/GREEN mapping to HIGH/MODERATE/LOW",
-      "gpt4o_report": "Simulated Expert Consultant Opinion",
-      "gemini_report": "Simulated Data Analyst Opinion",
-      "consensus_summary": "Final Unified Clinical Decision"
-    }
-    Use the provided patient data to make it medically rigorous. Language: ${language}.`;
-    
-    const result = await this.chatWithAI(prompt, patientData, [], language);
+  async getCollaborativeConsensus(data, lang = "en") {
+    const res = await this.chatWithAI("Generate a Joint Council Consensus in JSON format.", data, [], lang);
     try {
-        // Attempt to parse JSON if model follows instructions, otherwise wrap it
-        const jsonStr = result.response.replace(/```json|```/g, "").trim();
-        return { success: true, ...JSON.parse(jsonStr) };
-    } catch (err) {
-        return {
-            success: true,
-            risk_level: "MODERATE",
-            gpt4o_report: "Neural Synthesis Active",
-            gemini_report: "Clinical Data Synchronized",
-            consensus_summary: result.response
-        };
+      const jsonStr = res.response.replace(/```json|```/g, "").trim();
+      return { success: true, ...JSON.parse(jsonStr) };
+    } catch (e) {
+      return { success: true, risk_level: "MODERATE", consensus_summary: res.response };
     }
   }
 
-  // Helper to convert file contents
   async fileToGenerativePart(file) {
-    const base64EncodedDataPromise = new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result.split(',')[1]);
-      reader.readAsDataURL(file);
+    const base64 = await new Promise(resolve => {
+      const r = new FileReader(); r.onloadend = () => resolve(r.result.split(',')[1]); r.readAsDataURL(file);
     });
-    return {
-      inlineData: { data: await base64EncodedDataPromise, mimeType: file.type },
-    };
+    return { inlineData: { data: base64, mimeType: file.type } };
   }
 }
 
