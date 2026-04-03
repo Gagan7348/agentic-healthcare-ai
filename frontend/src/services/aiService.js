@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
+import { API_URL } from "../config";
 
 // Configuration for AI Council
 const DEFAULT_MODEL = "gemini-2.0-flash"; // Upgraded for 2026 Stability
@@ -62,7 +64,34 @@ class aiService {
     
     let lastError = null;
 
-    // STEP 1: Attempt Gemini Council (Google)
+    // NEW STEP 1: Attempt Cloud Backend (FastAPI - Port 8000)
+    // This is the preferred method as it uses server-side keys
+    console.log("📡 ROUTING: AI Council request via Cloud Backend...");
+    try {
+      const backendResponse = await axios.post(`${API_URL}/api/ai/chat`, {
+        message: message,
+        patient_data: patientContext,
+        history: history.map(msg => ({ 
+          role: msg.role === 'assistant' ? 'assistant' : 'user', 
+          content: msg.content 
+        })),
+        language: language
+      });
+
+      if (backendResponse.data && backendResponse.data.success) {
+        return {
+          success: true,
+          response: backendResponse.data.response,
+          agent_status: backendResponse.data.agent_status || "Diagnostic Engine: Neural Cloud (Backend)",
+          model: backendResponse.data.model || "Backend-AI"
+        };
+      }
+    } catch (backendErr) {
+      console.warn("⚠️ Local Backend AI failed. Falling back to direct client-side SDK...", backendErr.message);
+      lastError = backendErr;
+    }
+
+    // STEP 2: Attempt Direct Gemini Council (Legacy/Fallback)
     if (this.genAI) {
       for (const modelName of this.models) {
         try {
@@ -71,7 +100,7 @@ class aiService {
             history: history.map(msg => ({
               role: msg.role === 'user' ? 'user' : 'model',
               parts: [{ text: msg.content }]
-            })).filter((_, i) => i > 0 || history[0]?.role === 'user'), // Force user-first
+            })).filter((_, i) => i > 0 || history[0]?.role === 'user'),
             generationConfig: { maxOutputTokens: 2000, temperature: 0.2 },
           });
           const result = await chat.sendMessage(finalInput);
@@ -79,7 +108,7 @@ class aiService {
           return {
             success: true,
             response: response.text(),
-            agent_status: `Diagnostic Engine: ${modelName} (Direct-Netlify)`,
+            agent_status: `Diagnostic Engine: ${modelName} (Direct-Client)`,
             model: modelName
           };
         } catch (err) {
@@ -92,7 +121,7 @@ class aiService {
       }
     }
 
-    // STEP 2: Emergency Fallback to OpenAI (GPT-4o)
+    // STEP 3: Emergency Fallback to OpenAI (GPT-4o)
     if (OPENAI_API_KEY) {
       console.log("🚑 EMERGENCY FAILOVER: Deploying OpenAI (GPT-4o) Council...");
       try {
@@ -106,7 +135,7 @@ class aiService {
             model: "gpt-4o",
             messages: [
               { role: "system", content: fullSystemPrompt },
-              ...history.map(msg => ({ role: msg.role, content: msg.content })),
+              ...history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content })),
               { role: "user", content: finalInput }
             ],
             temperature: 0.2
@@ -127,7 +156,7 @@ class aiService {
       }
     }
 
-    throw new Error(`AI Council Fully Busy or Keys Compromised. (Details: ${lastError?.message})`);
+    throw new Error(`AI Council Fully Busy or Keys Compromised. (Details: ${lastError?.message || lastError})`);
   }
 
   /**
