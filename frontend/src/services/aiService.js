@@ -70,7 +70,8 @@ class aiService {
     // Attempt every model in the panel to avoid 429/504
     for (const modelName of this.models) {
       try {
-        const model = this.genAI.getGenerativeModel({ model: modelName });
+        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
+        const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
         
         // Convert history for Gemini SDK (Must start with 'user' role)
         let geminiHistory = history.map(msg => ({
@@ -131,8 +132,8 @@ class aiService {
     USE CLINICAL MEDICAL TERMINOLOGY.`;
 
     try {
-        // We use the high-speed Flash 1.5 Vision model
-        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL });
+        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
+        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL }, { apiVersion: "v1" });
         
         // Convert Blob/File to base64 for direct transfer
         const base64Data = await this.fileToGenerativePart(file);
