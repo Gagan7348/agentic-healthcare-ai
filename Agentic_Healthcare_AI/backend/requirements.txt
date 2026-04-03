@@ -26,7 +26,7 @@ google-generativeai>=0.7.2
 python-dotenv==1.0.0
 
 # Translation & Multilingual Support
-googletrans==4.0.0rc1
+deep-translator==1.11.4
 langdetect==1.0.9
 
 # Voice - Speech Recognition

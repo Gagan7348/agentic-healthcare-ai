@@ -9,11 +9,11 @@ from typing import Optional, Dict, List
 
 # Translation library
 try:
-    from googletrans import Translator
+    from deep_translator import GoogleTranslator
     TRANSLATOR_AVAILABLE = True
 except ImportError:
     TRANSLATOR_AVAILABLE = False
-    print("⚠️  googletrans not installed. Install: pip install googletrans==4.0.0rc1")
+    print("⚠️  deep-translator not installed. Install: pip install deep-translator")
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +85,11 @@ class TranslationService:
     
     def __init__(self):
         if TRANSLATOR_AVAILABLE:
-            self.translator = Translator()
+            # We don't initialize a single translator because deep-translator 
+            # requires source and target during initialization
+            self.available = True
         else:
-            self.translator = None
+            self.available = False
             logger.warning("Translator not available")
     
     def translate(
@@ -107,7 +109,7 @@ class TranslationService:
         Returns:
             Translated text
         """
-        if not self.translator:
+        if not self.available:
             return text  # Return original if translator not available
         
         # If same language, return original
@@ -120,14 +122,13 @@ class TranslationService:
             if text_lower in HEALTH_TERMS and target_lang in HEALTH_TERMS[text_lower]:
                 return HEALTH_TERMS[text_lower][target_lang]
             
-            # Translate using Google Translate
-            result = self.translator.translate(
-                text, 
-                src=source_lang, 
-                dest=target_lang
-            )
+            # Map code to full language name if necessary (deep-translator handles 'en', 'hi', etc.)
+            # Translate using deep-translator
+            translated = GoogleTranslator(
+                source=source_lang, 
+                target=target_lang
+            ).translate(text)
             
-            translated = result.text
             logger.info(f"Translated: {text[:30]}... ({source_lang}→{target_lang})")
             return translated
             
@@ -145,13 +146,10 @@ class TranslationService:
         return [self.translate(text, target_lang, source_lang) for text in texts]
     
     def detect_language(self, text: str) -> str:
-        """Detect language of text"""
-        if not self.translator:
-            return "en"
-        
+        """Detect language of text using langdetect (more reliable)"""
         try:
-            detection = self.translator.detect(text)
-            return detection.lang
+            from langdetect import detect
+            return detect(text)
         except:
             return "en"
 
