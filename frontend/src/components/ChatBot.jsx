@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { MessageSquare, X, Send, Bot, Sparkles, Loader2 } from 'lucide-react'
+import aiService from '../services/aiService'
 
 function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
@@ -7,17 +8,43 @@ function ChatBot() {
     { role: 'bot', text: 'Hello! I am your Agentic AI assistant. How can I help you today?' }
   ])
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef(null)
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    const newMessages = [...messages, { role: 'user', text: input }]
-    setMessages(newMessages)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const handleSend = async () => {
+    if (!input.trim() || loading) return
+    const userText = input
+    setMessages(prev => [...prev, { role: 'user', text: userText }])
     setInput('')
+    setLoading(true)
     
-    // Simple mock response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'bot', text: "I'm processing your request using the Agentic AI core. Please wait a moment..." }])
-    }, 1000)
+    try {
+      const history = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text
+      }))
+      
+      const response = await aiService.chatWithAI(userText, null, history, 'en')
+      
+      if (response.success) {
+        setMessages(prev => [...prev, { role: 'bot', text: response.response }])
+      }
+    } catch (error) {
+      const errorText = error.message.includes('quota') || error.message.includes('limit') 
+        ? "Neural Quota Exceeded. Please configure valid API keys."
+        : "Core Link Disconnected: " + error.message;
+      setMessages(prev => [...prev, { role: 'bot', text: "SYSTEM ALERT: " + errorText }])
+    }
+    
+    setLoading(false)
   }
 
   return (
@@ -54,6 +81,15 @@ function ChatBot() {
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] p-4 rounded-2xl text-xs font-bold leading-relaxed bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-tl-none shadow-sm flex items-center space-x-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                  <span>Processing...</span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
           
           <div className="p-4 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
@@ -63,12 +99,14 @@ function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                disabled={loading}
                 placeholder="Ask Agentic AI..."
-                className="w-full pl-6 pr-14 py-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl text-xs font-bold outline-none dark:text-white"
+                className="w-full pl-6 pr-14 py-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl text-xs font-bold outline-none dark:text-white disabled:opacity-50"
               />
               <button 
                 onClick={handleSend}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20"
+                disabled={loading}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4" />
               </button>
