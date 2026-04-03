@@ -34,9 +34,8 @@ SpeechRecognition==3.10.0
 pydub==0.25.1
 gTTS==2.4.0
 
-# Audio Processing
-pyaudio==0.2.14
-wave==0.0.2
+# Audio Processing (Handled via pydub/SpeechRecognition - no pyaudio needed on server)
+# Removed pyaudio/wave due to system dependency conflicts on cloud
 
 # Additional Utilities
 requests==2.31.0
