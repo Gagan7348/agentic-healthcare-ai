@@ -16,8 +16,9 @@ DATABASE_URL = settings.DATABASE_URL
 # Initialize MongoDB Client
 try:
     client = MongoClient(DATABASE_URL)
-    # The database name is usually extracted from the URL; default to 'healthcare_ai' if not present
-    db_name = DATABASE_URL.split('/')[-1] if '/' in DATABASE_URL.split('//')[-1] else "healthcare_ai"
+    # Extract database name and strip query parameters if present
+    db_path = DATABASE_URL.split('//')[-1].split('/')[-1]
+    db_name = db_path.split('?')[0] if '?' in db_path else (db_path or "healthcare_ai")
     db = client[db_name]
 except Exception as e:
     print(f"❌ MongoDB Connection Error: {e}")
