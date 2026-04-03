@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Configuration for AI Council
-const DEFAULT_MODEL = "gemini-1.5-flash";
+const DEFAULT_MODEL = "gemini-2.0-flash"; // Upgraded for 2026 Stability
 const BACKUP_KEY = "AIzaSyBitVCSzJlSwwaQVrvfx2Qw32flej6yydU";
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || BACKUP_KEY;
 
@@ -47,12 +47,14 @@ const languageMap = {
  */
 class aiService {
   constructor() {
-    // Force the stable 'v1' API version to avoid v1beta 404 errors
     this.genAI = new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" });
     this.models = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-2.0-flash", // 2026 Production Standard
+        "gemini-2.0-pro",  // 2026 Advanced Research
+        "gemini-1.5-flash-latest", // Legacy Fallback
+        "gemini-pro" // High-Stability Fallback
     ];
+    this.workingModel = null;
   }
 
   /**
@@ -70,7 +72,8 @@ class aiService {
     // Attempt every model in the panel to avoid 429/504
     for (const modelName of this.models) {
       try {
-        const model = this.genAI.getGenerativeModel({ model: modelName });
+        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
+        const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
         
         // Convert history for Gemini SDK (Must start with 'user' role)
         let geminiHistory = history.map(msg => ({
@@ -131,8 +134,8 @@ class aiService {
     USE CLINICAL MEDICAL TERMINOLOGY.`;
 
     try {
-        // We use the high-speed Flash 1.5 Vision model
-        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL });
+        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
+        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL }, { apiVersion: "v1" });
         
         // Convert Blob/File to base64 for direct transfer
         const base64Data = await this.fileToGenerativePart(file);
@@ -147,7 +150,7 @@ class aiService {
             success: true,
             analysis: response.text(),
             model: DEFAULT_MODEL,
-            agent_status: "Vision Analyst: Flash 1.5 (Netlify)"
+            agent_status: `Vision Analyst: ${DEFAULT_MODEL} (Netlify)`
         };
     } catch (err) {
         console.error("Vision Error:", err);
