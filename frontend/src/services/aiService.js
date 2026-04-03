@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Configuration for AI Council
-const DEFAULT_MODEL = "gemini-2.0-flash"; // 2026 Production Standard
+const DEFAULT_MODEL = "gemini-1.5-flash"; // 2026 Production Standard
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
