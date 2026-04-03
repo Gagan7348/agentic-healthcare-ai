@@ -39,8 +39,8 @@ const languageMap = {
  */
 class aiService {
   constructor() {
-    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" }) : null;
-    this.models = ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-flash-latest"];
+    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+    this.models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
   }
 
   /**
@@ -59,7 +59,7 @@ class aiService {
     if (this.genAI) {
       for (const modelName of this.models) {
         try {
-          const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
+          const model = this.genAI.getGenerativeModel({ model: modelName });
           const chat = model.startChat({
             history: history.map(msg => ({
               role: msg.role === 'user' ? 'user' : 'model',
@@ -130,7 +130,7 @@ class aiService {
     const prompt = "Perform an authoritative clinical analysis of this medical report. Extract vitals and diagnosis.";
     try {
         if (!this.genAI) throw new Error("Gemini Key Missing for Vision");
-        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL }, { apiVersion: "v1" });
+        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL });
         const base64Data = await this.fileToGenerativePart(file);
         const result = await model.generateContent([prompt, base64Data]);
         const response = await result.response;
