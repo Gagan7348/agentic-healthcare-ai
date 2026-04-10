@@ -45,10 +45,10 @@ class aiService {
     // v1beta supports ALL Gemini models including 1.5-flash, 1.5-pro, 2.0-flash
     this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
     this.models = [
-        "gemini-2.0-flash",   // Primary — latest fast model
-        "gemini-1.5-flash",   // Stable fallback
-        "gemini-1.5-pro",     // Advanced fallback
-        "gemini-1.0-pro"      // Legacy fallback
+        "gemini-2.0-flash",           // Primary — latest fast model
+        "gemini-2.0-flash-lite",      // Lite fallback variant
+        "gemini-flash-latest",        // Stable flash fallback (no 1.5- suffix required on this API tier)
+        "gemini-pro-latest"           // Legacy advanced fallback
     ];
     this.workingModel = null;
   }
