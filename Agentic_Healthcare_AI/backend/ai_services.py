@@ -57,10 +57,10 @@ if GEMINI_AVAILABLE and settings.has_gemini_key:
             safety_settings=safety_settings
         )
         
-        print(f"✅ Gemini AI initialized: {settings.DEFAULT_MODEL}")
+        print(f"Gemini AI initialized: {settings.DEFAULT_MODEL}")
         
     except Exception as e:
-        print(f"❌ Gemini Initialization Error: {e}")
+        print(f"Gemini Initialization Error: {e}")
 
 # Initialize Agentic Council (Phidata + Groq + Tavily)
 reasoning_agent = None
@@ -80,9 +80,9 @@ if PHIDATA_AVAILABLE and settings.PHIDATA_API_KEY and settings.GROQ_API_KEY:
             markdown=True,
             show_tool_calls=True
         )
-        print("✅ Agentic Council initialized (Groq + Tavily + Phidata)")
+        print("Agentic Council initialized (Groq + Tavily + Phidata)")
     except Exception as e:
-        print(f"⚠️  Agentic Initialization Error: {e}")
+        print(f"WARNING: Agentic Initialization Error: {e}")
 
 
 class HealthcareAI:
@@ -264,13 +264,13 @@ Key Guidelines:
                             }
                         except Exception as model_err:
                             last_error = str(model_err)
-                            print(f"⚠️  Model {model_name} with key {api_key[:6]}... failed: {last_error}")
+                            print(f"WARNING: Model {model_name} with key {api_key[:6]}... failed: {last_error}")
                             if "429" in last_error or "deadline" in last_error.lower():
                                 continue # Try the next model with this key
                             break # Non-quota error, move to next key
                             
                 except Exception as key_err:
-                    print(f"⚠️  Key rotation failed: {key_err}")
+                    print(f"WARNING: Key rotation failed: {key_err}")
                     continue # Try the next available key
 
             # ====================================================================
@@ -633,7 +633,7 @@ CRITICAL: If {language_name} is an Indian language like Hindi, Tamil, Bengali, e
                                 continue # Try next model
                             break # Fatal model error, try next key
                 except Exception as key_err:
-                    print(f"⚠️  Vision Key rotation error: {key_err}")
+                    print(f"WARNING: Vision Key rotation error: {key_err}")
                     continue
 
             # Stage 2: Emergency Fallback to GPT-4o Vision if Gemini fails

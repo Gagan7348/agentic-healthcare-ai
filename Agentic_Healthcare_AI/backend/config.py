@@ -126,23 +126,23 @@ settings = Settings()
 # Print configuration status on import
 if __name__ != "__main__":
     print("\n" + "="*60)
-    print("🔧 Healthcare AI - Configuration Status (Gemini)")
+    print("FIX: Healthcare AI - Configuration Status (Gemini)")
     print("="*60)
     
     if settings.has_gemini_key:
-        print(f"✅ Google Gemini AI: Configured")
+        print(f"OK: Google Gemini AI: Configured")
         print(f"   Model: {settings.DEFAULT_MODEL}")
         print(f"   Max Tokens: {settings.MAX_TOKENS}")
         print(f"   Temperature: {settings.TEMPERATURE}")
         
         # Show pricing info
         if settings.DEFAULT_MODEL == "gemini-1.5-flash":
-            print(f"   💰 Cost: FREE tier (15 RPM)")
-            print(f"   💰 Paid: $0.000075/1K chars")
+            print(f"   PRICE: FREE tier (15 RPM)")
+            print(f"   PRICE: Paid: $0.000075/1K chars")
         elif settings.DEFAULT_MODEL == "gemini-1.5-pro":
-            print(f"   💰 Cost: $0.00125/1K chars")
+            print(f"   PRICE: $0.00125/1K chars")
     else:
-        print("❌ Google Gemini AI: Not configured")
+        print("ERROR: Google Gemini AI: Not configured")
         print("   Get free API key at: https://makersuite.google.com/app/apikey")
         print("   Add to backend/.env file: GEMINI_API_KEY=your-key")
     

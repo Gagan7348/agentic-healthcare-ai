@@ -85,7 +85,7 @@ for disease, file_prefix in model_files.items():
         features[disease] = joblib.load(_MODELS_DIR / f"{file_prefix}_features.pkl")
         print(f"✅ Loaded {disease} model")
     except Exception as e:
-        print(f"⚠️  Could not load {disease} model: {e}")
+        print(f"WARNING: Could not load {disease} model: {e}")
 
 # ============================================================================
 # Pydantic Models
@@ -1113,17 +1113,17 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("🏥 Healthcare AI System - Gemini Edition")
     print("="*70)
-    print(f"📊 ML Models loaded: {len(models)}/3")
+    print(f"ML Models loaded: {len(models)}/3")
     if settings.has_gemini_key:
-        print(f"🤖 AI Provider: Google Gemini")
-        print(f"📱 Model: {settings.DEFAULT_MODEL}")
-        print(f"💰 Cost: {'FREE tier!' if 'flash' in settings.DEFAULT_MODEL else '$0.00125/1K chars'}")
-    else:
-        print(f"⚠️  AI not configured - Get free key at:")
+        print(f"AI Provider: Google Gemini")
+        print(f"Model: {settings.DEFAULT_MODEL}")
+        print(f"Cost: {'FREE tier!' if 'flash' in settings.DEFAULT_MODEL else '$0.00125/1K chars'}")
+    if not settings.has_gemini_key:
+        print(f"WARNING: AI not configured - Get free key at:")
         print(f"   https://makersuite.google.com/app/apikey")
-    print("🌐 Server: http://localhost:8000")
-    print("📚 API Docs: http://localhost:8000/docs")
-    print("🔄 Interactive: http://localhost:8000/redoc")
+    print("Server: http://localhost:8000")
+    print("API Docs: http://localhost:8000/docs")
+    print("Interactive: http://localhost:8000/redoc")
     print("="*70 + "\n")
     
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

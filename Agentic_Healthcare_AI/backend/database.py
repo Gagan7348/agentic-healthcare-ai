@@ -21,7 +21,7 @@ try:
     db_name = db_path.split('?')[0] if '?' in db_path else (db_path or "healthcare_ai")
     db = client[db_name]
 except Exception as e:
-    print(f"❌ MongoDB Connection Error: {e}")
+    print(f"ERROR: MongoDB Connection Error: {e}")
     db = None
 
 # ── Dependency ────────────────────────────────────────────────────────────────
@@ -44,11 +44,11 @@ def init_db():
             db.patients_monitoring.create_index("patient_ref", unique=True)
             db.patients_optimal.create_index("patient_ref", unique=True)
             
-            print(f"✅ MongoDB Initialized → {DATABASE_URL}")
+            print(f"OK: MongoDB Initialized -> {DATABASE_URL}")
         except Exception as e:
-            print(f"⚠️ MongoDB Index Creation Failed: {e}")
+            print(f"WARNING: MongoDB Index Creation Failed: {e}")
     else:
-        print("❌ MongoDB Not Initialized: Connection failed.")
+        print("ERROR: MongoDB Not Initialized: Connection failed.")
 
 # ── CRUD helpers ──────────────────────────────────────────────────────────────
 

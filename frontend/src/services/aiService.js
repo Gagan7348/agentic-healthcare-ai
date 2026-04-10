@@ -69,7 +69,7 @@ class aiService {
 
     // NEW STEP 1: Attempt Cloud Backend (FastAPI - Port 8000)
     // This is the preferred method as it uses server-side keys
-    console.log("📡 ROUTING: AI Council request via Cloud Backend...");
+    console.log(`📡 ROUTING: AI Council request via Cloud Backend (${API_URL})...`);
     
     // Ensure patient_data meets FastAPI schema (requires age, gender at minimum)
     let safePatientData = null;
@@ -187,7 +187,7 @@ CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accur
     let lastError = null;
 
     // STEP 1: Attempt Cloud Backend Vision (Preferred)
-    console.log("📡 ROUTING: Vision Analysis via Cloud Backend...");
+    console.log(`📡 ROUTING: Vision Analysis via Cloud Backend (${API_URL})...`);
     try {
         const formData = new FormData();
         formData.append("file", file);

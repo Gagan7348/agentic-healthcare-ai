@@ -13,7 +13,7 @@ try:
     TRANSLATOR_AVAILABLE = True
 except ImportError:
     TRANSLATOR_AVAILABLE = False
-    print("⚠️  deep-translator not installed. Install: pip install deep-translator")
+    print("WARNING: deep-translator not installed. Install: pip install deep-translator")
 
 logger = logging.getLogger(__name__)
 

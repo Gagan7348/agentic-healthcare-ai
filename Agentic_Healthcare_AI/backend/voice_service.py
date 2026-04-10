@@ -15,14 +15,14 @@ try:
     GTTS_AVAILABLE = True
 except ImportError:
     GTTS_AVAILABLE = False
-    print("⚠️  gTTS not installed. Install: pip install gtts")
+    print("WARNING: gTTS not installed. Install: pip install gtts")
 
 try:
     from elevenlabs.client import ElevenLabs
     ELEVENLABS_AVAILABLE = True
 except ImportError:
     ELEVENLABS_AVAILABLE = False
-    print("⚠️  ElevenLabs v2 not installed. Install: pip install elevenlabs")
+    print("WARNING: ElevenLabs v2 not installed. Install: pip install elevenlabs")
 
 from .config import settings
 
@@ -31,14 +31,14 @@ try:
     SR_AVAILABLE = True
 except ImportError:
     SR_AVAILABLE = False
-    print("⚠️  SpeechRecognition not installed. Install: pip install SpeechRecognition")
+    print("WARNING: SpeechRecognition not installed. Install: pip install SpeechRecognition")
 
 try:
     from pydub import AudioSegment
     PYDUB_AVAILABLE = True
 except ImportError:
     PYDUB_AVAILABLE = False
-    print("⚠️  pydub not installed. Install: pip install pydub")
+    print("WARNING: pydub not installed. Install: pip install pydub")
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class VoiceService:
             # Recognize speech using Google Speech Recognition
             text = recognizer.recognize_google(audio, language=lang_code)
             
-            logger.info(f"✅ Transcribed ({language}): {text[:50]}...")
+            logger.info(f"OK: Transcribed ({language}): {text[:50]}...")
             return text
             
         except sr.UnknownValueError:
@@ -129,7 +129,7 @@ class VoiceService:
                     )
                     # Convert generator to bytes
                     audio = b"".join(list(audio_generator))
-                    logger.info(f"✅ Generated ElevenLabs voice ({language})")
+                    logger.info(f"OK: Generated ElevenLabs voice ({language})")
                     return audio
                 except Exception as e:
                     logger.warning(f"ElevenLabs Fallback to gTTS: {e}")
@@ -151,7 +151,7 @@ class VoiceService:
             
             audio_data = audio_fp.read()
             
-            logger.info(f"✅ Generated gTTS speech ({language}): {len(audio_data)} bytes")
+            logger.info(f"OK: Generated gTTS speech ({language}): {len(audio_data)} bytes")
             return audio_data
             
         except Exception as e:
