@@ -31,7 +31,7 @@ Key Guidelines:
 ✅ USE precise medical terminology followed by a parenthetical clarification for the layperson (e.g., 'Tachycardia (Rapid Heart Rate)').
 ✅ ALWAYS conclude with a clear warning: "SYSTEM NOTICE: This is an AI-generated clinical impression. Mandatory specialist verification is required for final diagnosis and medication initiation."`;
 
-const languageMap = {
+export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
   "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati", "kn": "Kannada",
   "ml": "Malayalam", "pa": "Punjabi"
