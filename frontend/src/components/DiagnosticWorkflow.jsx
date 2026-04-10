@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { Activity, Heart, Stethoscope, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, ShieldCheck, Zap, ArrowRight } from 'lucide-react'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
 
 function DiagnosticWorkflow({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [step, setStep] = useState(1)
