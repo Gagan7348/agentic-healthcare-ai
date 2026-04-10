@@ -180,29 +180,43 @@ class aiService {
   async analyzeReport(file, fileType, language = "en") {
     const langName = languageMap[language] || "English";
     const prompt = `Perform an authoritative clinical analysis of this medical report. Extract vitals, findings, and diagnosis. Respond entirely in ${langName}.`;
-    try {
-        if (!this.genAI) throw new Error("Gemini Key Missing for Vision");
-        // Use v1beta which supports gemini-2.0-flash vision
-        const model = this.genAI.getGenerativeModel(
-          { model: DEFAULT_MODEL },
-          { apiVersion: "v1beta" }
-        );
-        
-        // Convert Blob/File to base64 for direct transfer
-        const base64Data = await this.fileToGenerativePart(file);
-        const result = await model.generateContent([prompt, base64Data]);
-        const response = await result.response;
+    
+    let lastError = null;
 
-        return {
-            success: true,
-            analysis: response.text(),
-            model: DEFAULT_MODEL,
-            agent_status: `Vision Analyst: ${DEFAULT_MODEL} (v1beta)`
-        };
-    } catch (err) {
-        console.warn("Vision model failed, falling back to text analysis:", err.message);
+    if (!this.genAI) {
+        console.warn("Gemini Key Missing for Vision - falling back to text analysis proxy (no vision)");
         return this.chatWithAI(prompt, { type: "Medical Report", language: langName }, [], language);
     }
+    
+    // Attempt vision models with fallback chain to handle Quota (429) cleanly
+    for (const modelName of this.models) {
+       try {
+           const model = this.genAI.getGenerativeModel(
+             { model: modelName },
+             { apiVersion: "v1beta" }
+           );
+           
+           // Convert Blob/File to base64 for direct transfer
+           const base64Data = await this.fileToGenerativePart(file);
+           const result = await model.generateContent([prompt, base64Data]);
+           const response = await result.response;
+   
+           return {
+               success: true,
+               analysis: response.text(),
+               model: modelName,
+               agent_status: `Vision Analyst: ${modelName} (v1beta)`
+           };
+       } catch (err) {
+           lastError = err;
+           console.warn(`Vision model ${modelName} failed, trying next...`, err.message);
+           continue; // Attempt the next model in the fallback array
+       }
+    }
+    
+    // If all models hit quota or fail
+    console.error("All Vision models failed:", lastError.message);
+    throw new Error(`Vision models completely exhausted. Please try again later. (Error: ${lastError.message})`);
   }
 
   async generateTreatmentPlan(data, lang = "en") {
