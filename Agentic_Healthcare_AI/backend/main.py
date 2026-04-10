@@ -937,9 +937,6 @@ async def drug_info(drug_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/api/icd10/search")
 async def icd10_search(terms: str, max_results: int = 10):

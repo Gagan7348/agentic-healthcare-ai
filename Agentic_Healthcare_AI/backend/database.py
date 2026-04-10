@@ -152,6 +152,23 @@ def get_patient_history(db_instance, patient_ref: str) -> Dict:
     if not patient:
         return {"found": False}
 
+    def safe_dt(value):
+        """Convert datetime or str timestamp to ISO string safely."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value  # already ISO string (from legacy seed data)
+        try:
+            return value.isoformat()
+        except Exception:
+            return str(value)
+
+    def safe_truncate(text, limit=300):
+        """Truncate a text field safely even if it is None."""
+        if not text:
+            return text
+        return text[:limit] + "..." if len(text) > limit else text
+
     # Fetch diagnoses sorted by date
     diagnoses = list(db_instance.diagnoses.find({"patient_ref": patient_ref}).sort("created_at", -1))
     
@@ -167,7 +184,7 @@ def get_patient_history(db_instance, patient_ref: str) -> Dict:
             "gender": patient.get("gender"),
             "phone": patient.get("phone"),
             "email": patient.get("email"),
-            "registered": patient.get("created_at").isoformat() if patient.get("created_at") else None,
+            "registered": safe_dt(patient.get("created_at")),
         },
         "diagnoses": [
             {
@@ -178,16 +195,16 @@ def get_patient_history(db_instance, patient_ref: str) -> Dict:
                 "glucose": d.get("glucose"),
                 "bp": d.get("bp"),
                 "bmi": d.get("bmi"),
-                "date": d.get("created_at").isoformat() if d.get("created_at") else None,
+                "date": safe_dt(d.get("created_at")),
             }
             for d in diagnoses
         ],
         "consultations": [
             {
                 "message": c.get("message"),
-                "response": c.get("response")[:300] + "..." if c.get("response") and len(c.get("response")) > 300 else c.get("response"),
+                "response": safe_truncate(c.get("response")),
                 "ai_model": c.get("ai_model"),
-                "date": c.get("created_at").isoformat() if c.get("created_at") else None,
+                "date": safe_dt(c.get("created_at")),
             }
             for c in consultations
         ],
