@@ -44,10 +44,10 @@ class aiService {
   constructor() {
     this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" }) : null;
     this.models = [
-        "gemini-2.0-flash", // 2026 Production Standard
-        "gemini-2.0-pro",  // 2026 Advanced Research
-        "gemini-1.5-flash-latest", // Legacy Fallback
-        "gemini-pro" // High-Stability Fallback
+        "gemini-2.0-flash",   // Primary — fast & available
+        "gemini-1.5-flash",   // Stable fallback
+        "gemini-1.5-pro",     // Advanced fallback
+        "gemini-1.0-pro"      // Legacy emergency fallback
     ];
     this.workingModel = null;
   }
