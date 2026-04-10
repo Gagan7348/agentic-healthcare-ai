@@ -215,7 +215,7 @@ class GeminiClient:
             return {"success": False, "error": f"Gemini Vision Error: {str(e)}"}
 
 class HealthcareAI:
-    """Refactored Healthcare AI Service: Exclusive Direct Groq Llama Integration"""
+    """Refactored Healthcare AI Service: Pro-Intelligence Adaptive Engine (Gemini/Groq)"""
 
     @staticmethod
     def process_image_for_vision(image_bytes: bytes, max_size: int = 1024) -> bytes:
@@ -256,7 +256,7 @@ class HealthcareAI:
         language: str = "english"
     ) -> Dict:
         """
-        Primary Diagnostic Interface: Direct Groq Llama Logic.
+        Primary Diagnostic Interface: Dual-Engine Logic (Gemini Native / Groq Fallback).
         """
         # Map code to full name
         language_full = {
@@ -304,8 +304,8 @@ class HealthcareAI:
             return {
                 "success": True,
                 "response": result["content"],
-                "agent_status": "Groq Llama Engine Active (Direct)",
-                "model": result["model"],
+                "agent_status": result.get("agent_status", "AI Specialist Active"),
+                "model": result.get("model", "Hybrid-Engine"),
                 "timestamp": datetime.now().isoformat(),
                 "language": language
             }
@@ -381,7 +381,7 @@ class HealthcareAI:
 
     @staticmethod
     async def analyze_medical_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
-        """Direct Groq Llama-4-Scout Vision Analysis (Exhaustive Edition)"""
+        """Direct Multimodal AI Vision Analysis - Exhaustive Diagnostic Edition"""
         
         # Step 1: Optimize for vision payload
         optimized_content = HealthcareAI.process_image_for_vision(file_content)
@@ -420,8 +420,8 @@ class HealthcareAI:
             return {
                 "success": True,
                 "analysis": result["content"],
-                "model": "llama-3.2-vision",
-                "agent_status": "Groq Vision Engine Active (Direct)",
+                "model": result.get("model", "Hybrid-Vision-Core"),
+                "agent_status": result.get("agent_status", "Vision Specialist Active"),
                 "timestamp": datetime.now().isoformat()
             }
         return result
