@@ -45,11 +45,10 @@ class aiService {
     // v1beta supports ALL Gemini models including 1.5-flash, 1.5-pro, 2.0-flash
     this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
     this.models = [
-        "gemini-2.0-flash",        // Primary — latest fast model
-        "gemini-2.0-flash-lite",   // Lite version — lower quota impact
-        "gemini-1.5-flash-8b",     // Very small & fast — works on v1beta
-        "gemini-1.5-pro-latest",   // Best quality fallback
-        "gemini-1.5-flash-latest", // Flash latest — v1beta supported
+        "gemini-2.0-flash",   // Primary — latest fast model
+        "gemini-1.5-flash",   // Stable fallback
+        "gemini-1.5-pro",     // Advanced fallback
+        "gemini-1.0-pro"      // Legacy fallback
     ];
     this.workingModel = null;
   }
@@ -69,10 +68,21 @@ class aiService {
     // NEW STEP 1: Attempt Cloud Backend (FastAPI - Port 8000)
     // This is the preferred method as it uses server-side keys
     console.log("📡 ROUTING: AI Council request via Cloud Backend...");
+    
+    // Ensure patient_data meets FastAPI schema (requires age, gender at minimum)
+    let safePatientData = null;
+    if (patientContext) {
+      safePatientData = {
+         age: patientContext.age || 45,
+         gender: patientContext.gender || 'Unknown',
+         ...patientContext
+      };
+    }
+
     try {
       const backendResponse = await axios.post(`${API_URL}/api/ai/chat`, {
         message: message,
-        patient_data: patientContext,
+        patient_data: safePatientData,
         history: history.map(msg => ({ 
           role: msg.role === 'assistant' ? 'assistant' : 'user', 
           content: msg.content 
