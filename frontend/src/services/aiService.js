@@ -42,12 +42,14 @@ const languageMap = {
  */
 class aiService {
   constructor() {
-    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY, { apiVersion: "v1" }) : null;
+    // v1beta supports ALL Gemini models including 1.5-flash, 1.5-pro, 2.0-flash
+    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
     this.models = [
-        "gemini-2.0-flash",   // Primary — fast & available
-        "gemini-1.5-flash",   // Stable fallback
-        "gemini-1.5-pro",     // Advanced fallback
-        "gemini-1.0-pro"      // Legacy emergency fallback
+        "gemini-2.0-flash",        // Primary — latest fast model
+        "gemini-2.0-flash-lite",   // Lite version — lower quota impact
+        "gemini-1.5-flash-8b",     // Very small & fast — works on v1beta
+        "gemini-1.5-pro-latest",   // Best quality fallback
+        "gemini-1.5-flash-latest", // Flash latest — v1beta supported
     ];
     this.workingModel = null;
   }
@@ -91,11 +93,15 @@ class aiService {
       lastError = backendErr;
     }
 
-    // STEP 2: Attempt Direct Gemini Council (Legacy/Fallback)
+    // STEP 2: Attempt Direct Gemini Council using v1beta (supports all models)
     if (this.genAI) {
       for (const modelName of this.models) {
         try {
-          const model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
+          // v1beta required for gemini-1.5-x and gemini-2.0-flash-lite
+          const model = this.genAI.getGenerativeModel(
+            { model: modelName },
+            { apiVersion: "v1beta" }
+          );
           const chat = model.startChat({
             history: history.map(msg => ({
               role: msg.role === 'user' ? 'user' : 'model',
@@ -113,10 +119,9 @@ class aiService {
           };
         } catch (err) {
           lastError = err;
-          console.warn(`⚠️ Gemini ${modelName} failed/leaked. Trying next...`, err.message);
-          if (err.message.includes("leaked") || err.message.includes("403")) continue; 
-          if (err.message.includes("429") || err.message.includes("404")) continue;
-          break;
+          console.warn(`⚠️ Gemini ${modelName} failed. Trying next...`, err.message);
+          // Always continue to next model on any error
+          continue;
         }
       }
     }
@@ -163,11 +168,15 @@ class aiService {
    * Specialized Diagnostic Methods (Using the Hybrid Engine)
    */
   async analyzeReport(file, fileType, language = "en") {
-    const prompt = "Perform an authoritative clinical analysis of this medical report. Extract vitals and diagnosis.";
+    const langName = languageMap[language] || "English";
+    const prompt = `Perform an authoritative clinical analysis of this medical report. Extract vitals, findings, and diagnosis. Respond entirely in ${langName}.`;
     try {
         if (!this.genAI) throw new Error("Gemini Key Missing for Vision");
-        // DEFINTIVE FIX: Force stable 'v1' at the model level to bypass v1beta 404s
-        const model = this.genAI.getGenerativeModel({ model: DEFAULT_MODEL }, { apiVersion: "v1" });
+        // Use v1beta which supports gemini-2.0-flash vision
+        const model = this.genAI.getGenerativeModel(
+          { model: DEFAULT_MODEL },
+          { apiVersion: "v1beta" }
+        );
         
         // Convert Blob/File to base64 for direct transfer
         const base64Data = await this.fileToGenerativePart(file);
@@ -178,10 +187,11 @@ class aiService {
             success: true,
             analysis: response.text(),
             model: DEFAULT_MODEL,
-            agent_status: `Vision Analyst: ${DEFAULT_MODEL} (Netlify)`
+            agent_status: `Vision Analyst: ${DEFAULT_MODEL} (v1beta)`
         };
     } catch (err) {
-        return this.chatWithAI(prompt, { type: "Medical Report" }, [], language); // Fallback to text-based if vision fails
+        console.warn("Vision model failed, falling back to text analysis:", err.message);
+        return this.chatWithAI(prompt, { type: "Medical Report", language: langName }, [], language);
     }
   }
 
