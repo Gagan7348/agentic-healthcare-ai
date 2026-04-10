@@ -8,6 +8,8 @@ const BACKUP_KEY = "AIzaSyBitVCSzJlSwwaQVrvfx2Qw32flej6yydU";
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || BACKUP_KEY;
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
+console.log("🚀 AGENTIC AI: Stability Patch V3 Active (Backend-First Routing)");
+
 // Professional Clinical Diagnostic Persona
 const MEDICAL_SYSTEM_PROMPT = `You are a Board-Certified Senior Medical Specialist within the Agentic AI Hospital OS.
 Your role:
