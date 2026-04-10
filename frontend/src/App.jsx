@@ -230,11 +230,11 @@ function App() {
 
               <div className="flex items-center space-x-3 pl-2">
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-[var(--text-primary)] uppercase">Chief Medical Officer</p>
-                  <p className="text-[10px] text-blue-600 font-bold uppercase">Clinician Portal</p>
+                  <p className="text-xs font-bold text-[var(--text-primary)] uppercase">Healthcare User</p>
+                  <p className="text-[10px] text-blue-600 font-bold uppercase">Patient Portal</p>
                 </div>
                 <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-blue-600 font-bold shadow-sm">
-                  CM
+                  HP
                 </div>
               </div>
             </div>
