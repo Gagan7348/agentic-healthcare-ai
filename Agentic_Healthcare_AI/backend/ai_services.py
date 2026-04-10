@@ -114,7 +114,8 @@ class GroqClient:
         payload = {
             "messages": messages,
             "model": settings.GROQ_VISION_MODEL,
-            "temperature": 0.2
+            "temperature": 0.2,
+            "max_tokens": 1024  # Explicitly required for some vision models
         }
         
         try:
@@ -124,6 +125,12 @@ class GroqClient:
                     headers=headers,
                     json=payload
                 )
+                
+                if response.status_code != 200:
+                    error_data = response.json()
+                    print(f"FAILED: Groq API Error Body: {json.dumps(error_data, indent=1)}")
+                    return {"success": False, "error": f"Groq Vision API Error: {error_data.get('error', {}).get('message', 'Unknown error')}"}
+                
                 response.raise_for_status()
                 data = response.json()
                 
@@ -133,8 +140,8 @@ class GroqClient:
                     "model": settings.GROQ_VISION_MODEL
                 }
         except Exception as e:
-            print(f"FAILED: Groq Vision Direct Error: {str(e)}")
-            return {"success": False, "error": f"Groq Vision Error: {str(e)}"}
+            print(f"FAILED: Groq Vision Exception: {str(e)}")
+            return {"success": False, "error": f"Groq Vision System Error: {str(e)}"}
 
 class HealthcareAI:
     """Refactored Healthcare AI Service: Exclusive Direct Groq Llama Integration"""
