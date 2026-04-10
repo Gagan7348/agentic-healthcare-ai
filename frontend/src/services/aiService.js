@@ -71,7 +71,7 @@ class aiService {
         
         const response = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 120000 // 2 minutes for deep vision synthesis
+            timeout: 300000 // 5 minutes for deep exhaustive vision synthesis
         });
         
         if (response.data && response.data.success) {
