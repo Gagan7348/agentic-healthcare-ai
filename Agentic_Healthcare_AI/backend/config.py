@@ -24,7 +24,7 @@ class Settings:
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
     PHIDATA_API_KEY: str = os.getenv("PHIDATA_API_KEY", "")
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyCMzQkm3IS_ujaCj_gvLTrNdKXBZGwpOXA")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./healthcare_ai.db")
     
     # Default model for common tasks
