@@ -215,8 +215,9 @@ class aiService {
     }
     
     // If all models hit quota or fail
-    console.error("All Vision models failed:", lastError.message);
-    throw new Error(`Vision models completely exhausted. Please try again later. (Error: ${lastError.message})`);
+    console.error("All Vision models failed:", lastError?.message || "Unknown error");
+    console.warn("Vision model exhausted, falling back to text analysis proxy (no vision)");
+    return this.chatWithAI(prompt, { type: "Medical Report", language: langName }, [], language);
   }
 
   async generateTreatmentPlan(data, lang = "en") {
