@@ -14,9 +14,10 @@ try:
     from phi.model.xai import xAI
     from phi.tools.tavily import TavilyTools
     PHIDATA_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     PHIDATA_AVAILABLE = False
-    print("⚠️  phidata not installed. Run: pip install -U phidata")
+    print(f"⚠️  phidata import failed: {e}")
+    print("⚠️  Ensure 'phidata' is in requirements.txt (it should be installed as 'phi')")
 
 from .config import settings
 
