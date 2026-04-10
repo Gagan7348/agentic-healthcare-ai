@@ -38,3 +38,4 @@ dataset/
 *.csv
 *.sqlite
 *.db
+*.zip

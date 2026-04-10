@@ -3,7 +3,8 @@ import axios from 'axios'
 import { Clipboard, ShieldCheck, Zap, Heart, Calendar, Clock, AlertTriangle, ChevronRight, Activity, Beaker, Apple, Dumbbell, UserCheck, Microscope, Volume2, Pause, MessageSquare } from 'lucide-react'
 
 import { API_URL } from '../config'
-import aiService from '../services/aiService'
+import aiService, { languageMap } from '../services/aiService'
+import { getT } from '../utils/translations'
 
 function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [plan, setPlan] = useState(null)
@@ -15,7 +16,7 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
     bp: selectedPatient?.bp_systolic || 135,
     cholesterol: selectedPatient?.cholesterol || 210,
     bmi: selectedPatient?.bmi || 28.5,
-    language: language === 'hi' ? 'hindi' : language === 'en' ? 'english' : language
+    language: languageMap[language] || 'english'
   })
   const [audioLoading, setAudioLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -102,6 +103,8 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
     }
   }
 
+  const globalT = getT(language);
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
       {/* Configuration Hub */}
@@ -110,7 +113,7 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)] flex items-center space-x-3">
               <Clipboard className="w-6 h-6 text-blue-600" />
-              <span>{language === 'hi' ? 'उपचार योजना जनरेटर' : 'Personalized Treatment Plan'}</span>
+              <span>{globalT.personalizedTreatmentPlan}</span>
             </h2>
             <p className="text-slate-500 font-semibold text-sm mt-1">AI-Synthesized Clinical Directive</p>
           </div>
@@ -124,7 +127,7 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
             ) : (
               <Zap className="w-4 h-4" />
             )}
-            <span>{loading ? 'Synthesizing...' : (language === 'hi' ? 'योजना बनाएं' : 'Compose Plan')}</span>
+            <span>{loading ? globalT.synthesizing : globalT.composePlan}</span>
           </button>
         </div>
 
@@ -199,7 +202,7 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
                         <Volume2 className="w-5 h-5" />
                       )}
                       <span className="text-xs font-semibold uppercase tracking-wider">
-                        {audioLoading ? 'Generating...' : isPlaying ? 'Pause Audio' : (language === 'hi' ? 'योजना सुनें' : 'Listen')}
+                        {audioLoading ? '...' : isPlaying ? globalT.pauseAudio : globalT.listen}
                       </span>
                     </button>
                   </div>
@@ -255,13 +258,13 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
                             className="btn-primary w-full py-3 text-sm flex items-center justify-center space-x-2 mb-6"
                           >
                             <MessageSquare className="w-4 h-4" />
-                            <span>Consult Doctor</span>
+                            <span>{globalT.consultDoctor}</span>
                           </button>
 
                           <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
                              <div className="flex items-center space-x-2 mb-2 text-amber-700">
                                 <AlertTriangle className="w-4 h-4" />
-                                <span className="font-bold text-xs uppercase">Important Notice</span>
+                                <span className="font-bold text-xs uppercase">{globalT.importantNotice}</span>
                              </div>
                              <p className="text-xs font-medium text-amber-800 leading-relaxed">
                                This document is an AI suggestion. Final clinical decisions must be authorized by a registered medical officer.
@@ -278,7 +281,7 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
            <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center mb-6">
               <Microscope className="w-10 h-10 text-slate-400" />
            </div>
-           <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight mb-2">Analysis Pending</h3>
+           <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight mb-2">{globalT.analysisPending}</h3>
            <p className="text-sm font-medium text-[var(--text-muted)] max-w-sm">
              Input clinical data and execute the composer to generate a personalized Agentic AI health directive.
            </p>

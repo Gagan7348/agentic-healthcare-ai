@@ -20,9 +20,11 @@ import {
 } from 'lucide-react'
 
 import { API_URL } from '../config'
-import aiService from '../services/aiService'
+import aiService, { languageMap } from '../services/aiService'
+import { getT } from '../utils/translations'
 
 function Prediction({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
+  const globalT = getT(language);
   const [formData, setFormData] = useState({
     age: selectedPatient?.age || 45,
     gender: selectedPatient?.gender === 1 ? 'Female' : 'Male',
@@ -88,9 +90,10 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
     setExplanation(null)
     
     try {
+      const langName = languageMap[language] || "english"
       const response = await axios.post(`${API_URL}/api/predict`, {
         ...formData,
-        language: language === 'hi' ? 'hindi' : 'english'
+        language: langName
       })
       if (response.data.success) {
         const predsArray = Object.entries(response.data.predictions).map(([disease, prob]) => ({
@@ -157,38 +160,124 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
 
   const translations = {
     en: {
-      title: 'Health Screening Protocol', 
-      subtitle: 'Advanced neural diagnostics for multi-organ risk synthesis',
-      vitals: 'Clinical Biomarker Stream', 
-      familyHistory: 'Genetic Risk Predisposition',
-      run: 'Execute Neural Screening', 
-      results: 'Screening Analytics',
-      diabetes: 'Type 2 Diabetes', 
-      heart: 'Cardiovascular Disease', 
-      kidney: 'Renal Functionality',
+      title: 'Health Screening Protocol', subtitle: 'Advanced neural diagnostics for multi-organ risk synthesis',
+      vitals: 'Clinical Biomarker Stream', familyHistory: 'Genetic Risk Predisposition',
+      run: 'Execute Neural Screening', results: 'Screening Analytics',
+      diabetes: 'Type 2 Diabetes', heart: 'Cardiovascular Disease', kidney: 'Renal Functionality',
       age: 'Age', gender: 'Gender', glucose: 'Glucose (mg/dL)', hba1c: 'HbA1c (%)',
-      cholesterol: 'Cholesterol', bloodPressure: 'BP Systolic',
-      bmi: 'BMI', creatinine: 'Creatinine',
+      cholesterol: 'Cholesterol', bloodPressure: 'BP Systolic', bmi: 'BMI', creatinine: 'Creatinine',
       familyDiabetes: 'Family: Diabetes', familyHeart: 'Family: Heart',
       high: 'Critical Risk', medium: 'Elevated Risk', low: 'Optimal Range',
       explanation: 'AI Clinical Reasoning', recommend: 'Deploy Treatment Plan',
       awaitingTitle: 'Awaiting Protocol Execution', awaitingDesc: 'Input clinical biomarkers to initialize neural assessment matrix.'
     },
     hi: {
-      title: 'स्वास्थ्य जांच प्रोटोकॉल', 
-      subtitle: 'बहु-अंग जोखिम संश्लेषण के लिए उन्नत तंत्रिका निदान',
-      vitals: 'नैदानिक बायोमार्कर स्ट्रीम', 
-      familyHistory: 'आनुवंशिक जोखिम पूर्वसूचना',
-      run: 'जांच निष्पादित करें', 
-      results: 'जांच विश्लेषण',
+      title: 'स्वास्थ्य जांच प्रोटोकॉल', subtitle: 'बहु-अंग जोखिम संश्लेषण के लिए उन्नत तंत्रिका निदान',
+      vitals: 'नैदानिक बायोमार्कर स्ट्रीम', familyHistory: 'आनुवंशिक जोखिम पूर्वसूचना',
+      run: 'जांच निष्पादित करें', results: 'जांच विश्लेषण',
       diabetes: 'मधुमेह', heart: 'हृदय रोग', kidney: 'किडनी रोग',
       age: 'उम्र', gender: 'लिंग', glucose: 'ग्लूकोज', hba1c: 'HbA1c',
-      cholesterol: 'कोलेस्ट्रॉल', bloodPressure: 'रक्तचाप',
-      bmi: 'बीएमआई', creatinine: 'क्रिएटिनिन',
+      cholesterol: 'कोलेस्ट्रॉल', bloodPressure: 'रक्तचाप', bmi: 'बीएमआई', creatinine: 'क्रिएटिनिन',
       familyDiabetes: 'परिवार: मधुमेह', familyHeart: 'परिवार: हृदय रोग',
       high: 'गंभीर जोखिम', medium: 'बढ़ा हुआ जोखिम', low: 'इष्टतम सीमा',
       explanation: 'AI नैदानिक तर्क', recommend: 'उपचार योजना तैनात करें',
       awaitingTitle: 'प्रोटोकॉल प्रतीक्षा में', awaitingDesc: 'जोखिम मूल्यांकन शुरू करने के लिए विवरण भरें।'
+    },
+    bn: {
+      title: 'স্বাস্থ্য স্ক্রীনিং প্রোটোকল', subtitle: 'মাল্টি-অর্গান ঝুঁকি সংশ্লেষণের জন্য উন্নত নিউরাল ডায়াগনস্টিকস',
+      vitals: 'ক্লিনিক্যাল বায়োমার্কার', familyHistory: 'জেনেটিক ঝুঁকি',
+      run: 'স্ক্রীনিং চালান', results: 'স্ক্রীনিং ফলাফল',
+      diabetes: 'ডায়াবেটিস', heart: 'হৃদরোগ', kidney: 'কিডনি রোগ',
+      age: 'বয়স', gender: 'লিঙ্গ', glucose: 'গ্লুকোজ', hba1c: 'HbA1c',
+      cholesterol: 'কোলেস্টেরল', bloodPressure: 'রক্তচাপ', bmi: 'BMI', creatinine: 'ক্রিয়েটিনিন',
+      familyDiabetes: 'পরিবার: ডায়াবেটিস', familyHeart: 'পরিবার: হৃদরোগ',
+      high: 'মারাত্মক ঝুঁকি', medium: 'ঝুঁকি বেড়েছে', low: 'উপযুক্ত পরিসীমা',
+      explanation: 'AI ক্লিনিক্যাল যুক্তি', recommend: 'চিকিৎসা পরিকল্পনা দেখুন',
+      awaitingTitle: 'অপেক্ষমাণ', awaitingDesc: 'নিউরাল অ্যাসেসমেন্ট শুরু করতে ক্লিনিক্যাল ডেটা প্রদান করুন।'
+    },
+    ta: {
+      title: 'உடல்நல பரிசோதனை', subtitle: 'முன்கூட்டியே ஆபத்து கண்டறிதல்',
+      vitals: 'மருத்துவ அளவீடுகள்', familyHistory: 'மரபணு ஆபத்து',
+      run: 'பரிசோதனை தொடங்கு', results: 'பரிசோதனை முடிவுகள்',
+      diabetes: 'நீரிழிவு நோய்', heart: 'இதய நோய்', kidney: 'சிறுநீரக நோய்',
+      age: 'வயது', gender: 'பாலினம்', glucose: 'குளுக்கோஸ்', hba1c: 'HbA1c',
+      cholesterol: 'கொலஸ்ட்ரால்', bloodPressure: 'இரத்த அழுத்தம்', bmi: 'BMI', creatinine: 'கிரியேட்டினின்',
+      familyDiabetes: 'குடும்பம்: நீரிழிவு', familyHeart: 'குடும்பம்: இதயம்',
+      high: 'கடுமையான ஆபத்து', medium: 'ஆபத்து', low: 'இயல்பு',
+      explanation: 'AI மருத்துவ காரணம்', recommend: 'சிகிச்சை திட்டம்',
+      awaitingTitle: 'காத்திருக்கிறது', awaitingDesc: 'தரவை உள்ளிடவும்.'
+    },
+    te: {
+      title: 'ఆరోగ్య పరీక్ష', subtitle: 'అధునాతన ప్రమాద అంచనా',
+      vitals: 'క్లినికల్ కొలమానాలు', familyHistory: 'జన్యుపరమైన ప్రమాదం',
+      run: 'పరీక్ష ప్రారంభించండి', results: 'పరీక్ష ఫలితాలు',
+      diabetes: 'మధుమేహం', heart: 'గుండె జబ్బు', kidney: 'కిడ్నీ వ్యాధి',
+      age: 'వయసు', gender: 'లింగం', glucose: 'గ్లూకోజ్', hba1c: 'HbA1c',
+      cholesterol: 'కొలెస్ట్రాల్', bloodPressure: 'రక్తపోటు', bmi: 'BMI', creatinine: 'క్రియాటినిన్',
+      familyDiabetes: 'కుటుంబం: మధుమేహం', familyHeart: 'కుటుంబం: గుండె',
+      high: 'తీవ్ర ప్రమాదం', medium: 'ప్రమాదం', low: 'సాధారణం',
+      explanation: 'AI కారణం', recommend: 'చికిత్స ప్రణాళిక',
+      awaitingTitle: 'వేచి ఉంది', awaitingDesc: 'డేటాను నమోదు చేయండి.'
+    },
+    mr: {
+        title: 'आरोग्य तपासणी', subtitle: 'प्रगत जोखीम मूल्यांकन',
+        vitals: 'क्लीनिकल मेट्रिक्स', familyHistory: 'अनुवांशिक जोखीम',
+        run: 'तपासणी सुरू करा', results: 'तपासणी परिणाम',
+        diabetes: 'मधुमेह', heart: 'हृदयविकार', kidney: 'किडनी आजार',
+        age: 'वय', gender: 'लिंग', glucose: 'ग्लुकोज', hba1c: 'HbA1c',
+        cholesterol: 'कोलेस्ट्रॉल', bloodPressure: 'रक्तदाब', bmi: 'BMI', creatinine: 'क्रिएटिनिन',
+        familyDiabetes: 'कुटुंब: मधुमेह', familyHeart: 'कुटुंब: हृदय',
+        high: 'गंभीर जोखीम', medium: 'वाढलेली जोखीम', low: 'सामान्य',
+        explanation: 'AI कारण', recommend: 'उपचार योजना',
+        awaitingTitle: 'वाट पाहत आहे', awaitingDesc: 'डेटा प्रविष्ट करा.'
+    },
+    gu: {
+        title: 'સ્વાસ્થ્ય તપાસ', subtitle: 'અદ્યતન જોખમ મૂલ્યાંકન',
+        vitals: 'ક્લિનિકલ મેટ્રિક્સ', familyHistory: 'આનુવંશિક જોખમ',
+        run: 'તપાસ શરૂ કરો', results: 'પરિણામો',
+        diabetes: 'ડાયાબિટીસ', heart: 'હૃદય રોગ', kidney: 'કિડની રોગ',
+        age: 'ઉંમર', gender: 'લિંગ', glucose: 'ગ્લુકોઝ', hba1c: 'HbA1c',
+        cholesterol: 'કોલેસ્ટ્રોલ', bloodPressure: 'બ્લડ પ્રેશર', bmi: 'BMI', creatinine: 'ક્રિએટિનાઇન',
+        familyDiabetes: 'પરિવાર: ડાયાબિટીસ', familyHeart: 'પરિવાર: હૃદય',
+        high: 'ગંભીર જોખમ', medium: 'જોખમ', low: 'સામાન્ય',
+        explanation: 'AI કારણ', recommend: 'સારવાર યોજના',
+        awaitingTitle: 'પ્રતીક્ષા કરી રહ્યા છીએ', awaitingDesc: 'ડેટા દાખલ કરો.'
+    },
+    kn: {
+        title: 'ಆರೋಗ್ಯ ತಪಾಸಣೆ', subtitle: 'ಮುಂಗಡ ಅಪಾಯ ಮೌಲ್ಯಮಾಪನ',
+        vitals: 'ಕ್ಲಿನಿಕಲ್ ಮೆಟ್ರಿಕ್ಸ್', familyHistory: 'ಆನುವಂಶಿಕ ಅಪಾಯ',
+        run: 'ತಪಾಸಣೆ ಪ್ರಾರಂಭಿಸಿ', results: 'ಫಲಿತಾಂಶಗಳು',
+        diabetes: 'ಮಧುಮೇಹ', heart: 'ಹೃದ್ರೋಗ', kidney: 'ಮೂತ್ರಪಿಂಡ ರೋಗ',
+        age: 'ವಯಸ್ಸು', gender: 'ಲಿಂಗ', glucose: 'ಗ್ಲೂಕೋಸ್', hba1c: 'HbA1c',
+        cholesterol: 'ಕೊಲೆಸ್ಟ್ರಾಲ್', bloodPressure: 'ರಕ್ತದೊತ್ತಡ', bmi: 'BMI', creatinine: 'ಕ್ಯಾಟಿನೈನ್',
+        familyDiabetes: 'ಕುಟುಂಬ: ಮಧುಮೇಹ', familyHeart: 'ಕುಟುಂಬ: ಹೃದಯ',
+        high: 'ತೀವ್ರ ಅಪಾಯ', medium: 'ಅಪಾಯ', low: 'ಸಾಮಾನ್ಯ',
+        explanation: 'AI ಕಾರಣ', recommend: 'ಚಿಕಿತ್ಸಾ ಯೋಜನೆ',
+        awaitingTitle: 'ಕಾಯಲಾಗುತ್ತಿದೆ', awaitingDesc: 'ಡೇಟಾ ನಮೂದಿಸಿ.'
+    },
+    ml: {
+        title: 'ആരോഗ്യ പരിശോധന', subtitle: 'നൂതന അപകടസാധ്യത വിലയിരുത്തൽ',
+        vitals: 'ക്ലിനിക്കൽ അളവുകൾ', familyHistory: 'ജനിതക അപകടസാധ്യത',
+        run: 'പരിശോധന തുടങ്ങുക', results: 'ഫലങ്ങൾ',
+        diabetes: 'പ്രമേഹം', heart: 'ഹൃദ്രോഗം', kidney: 'വൃക്കരോഗം',
+        age: 'പ്രായം', gender: 'ലിംഗം', glucose: 'ഗ്ലൂക്കോസ്', hba1c: 'HbA1c',
+        cholesterol: 'കൊളസ്ട്രോൾ', bloodPressure: 'രക്തസമ്മർദ്ദം', bmi: 'BMI', creatinine: 'ക്രിയാറ്റിനിൻ',
+        familyDiabetes: 'കുടുംബം: പ്രമേഹം', familyHeart: 'കുടുംബം: ഹൃദയം',
+        high: 'ഗുരുതരമായ അപകടസാധ്യത', medium: 'അപകടസാധ്യത', low: 'സാധാരണ',
+        explanation: 'AI കാരണം', recommend: 'ചികിത്സാ പദ്ധതി',
+        awaitingTitle: 'കാത്തിരിക്കുന്നു', awaitingDesc: 'വിവരങ്ങൾ നൽകുക.'
+    },
+    pa: {
+        title: 'ਸਿਹਤ ਜਾਂਚ', subtitle: 'ਉੱਨਤ ਜੋਖਮ ਮੁਲਾਂਕਣ',
+        vitals: 'ਕਲੀਨਿਕਲ ਮੈਟ੍ਰਿਕਸ', familyHistory: 'ਜੈਨੇਟਿਕ ਜੋਖਮ',
+        run: 'ਜਾਂਚ ਸ਼ੁਰੂ ਕਰੋ', results: 'ਨਤੀਜੇ',
+        diabetes: 'ਸ਼ੂਗਰ', heart: 'ਦਿਲ ਦੀ ਬਿਮਾਰੀ', kidney: 'ਗੁਰਦੇ ਦੀ ਬਿਮਾਰੀ',
+        age: 'ਉਮਰ', gender: 'ਲਿੰਗ', glucose: 'ਗਲੂਕੋਜ਼', hba1c: 'HbA1c',
+        cholesterol: 'ਕੋਲੈਸਟ੍ਰੋਲ', bloodPressure: 'ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ', bmi: 'BMI', creatinine: 'ਕ੍ਰੀਏਟੀਨਾਈਨ',
+        familyDiabetes: 'ਪਰਿਵਾਰ: ਸ਼ੂਗਰ', familyHeart: 'ਪਰਿਵਾਰ: ਦਿਲ',
+        high: 'ਗੰਭੀਰ ਜੋਖਮ', medium: 'ਜੋਖਮ', low: 'ਆਮ',
+        explanation: 'AI ਕਾਰਨ', recommend: 'ਇਲਾਜ ਯੋਜਨਾ',
+        awaitingTitle: 'ਉਡੀਕ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ', awaitingDesc: 'ਡਾਟਾ ਭਰੋ.'
     }
   }
 
@@ -211,7 +300,7 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
         <div className="space-y-2">
           <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
             <Activity className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-xs font-semibold text-blue-700 uppercase">Diagnostic Protocol</span>
+            <span className="text-xs font-semibold text-blue-700 uppercase">{globalT.diagnosticProtocol}</span>
           </div>
           <h2 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">{t.title}</h2>
           <p className="text-sm text-[var(--text-muted)] font-medium">{t.subtitle}</p>
@@ -369,7 +458,7 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
                                   risk_level: res.risk_level
                                 })}
                                 className="p-2 bg-white rounded-lg hover:bg-slate-50 transition-all border border-slate-200" 
-                                title="Consult Doctor"
+                                title={globalT.consultDoctor}
                               >
                                 <MessageSquare className="w-4 h-4 text-emerald-600" />
                               </button>
@@ -382,7 +471,7 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
                           
                           <div className="mt-3 flex items-center justify-between">
                              <div className="flex items-center space-x-1.5">
-                                <span className="text-[10px] font-semibold uppercase text-slate-500">AI Confidence: {res.confidence}%</span>
+                                <span className="text-[10px] font-semibold uppercase text-slate-500">{globalT.aiConfidence}: {res.confidence}%</span>
                              </div>
                           </div>
                         </div>
@@ -411,7 +500,7 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
                         onClick={() => onNavigate('plan')}
                         className="w-full py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold uppercase transition-all"
                       >
-                        Deploy Clinical Matrix
+                        {globalT.deployMatrix}
                       </button>
                     </div>
                   )}

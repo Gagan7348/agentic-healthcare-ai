@@ -29,9 +29,11 @@ import {
 import AgenticConsensus from './AgenticConsensus'
 
 import { API_URL } from '../config'
-import aiService from '../services/aiService'
+import aiService, { languageMap } from '../services/aiService'
+import { getT } from '../utils/translations'
 
 function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
+  const globalT = getT(language);
   const [symptoms, setSymptoms] = useState({
     fever: false, cough: false, breathing: false, chest_pain: false,
     vomiting: false, diarrhea: false, weakness: false, unconscious: false,
@@ -159,8 +161,9 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
     setConsensusLoading(true)
     setError(null)
     try {
+      const langName = languageMap[language] || 'english'
       const response = await axios.post(`${API_URL}/api/asha/consensus`, {
-        patient: { ...patientData, language: language === 'hi' ? 'hindi' : 'english' },
+        patient: { ...patientData, language: langName },
         symptoms: symptoms
       })
       if (response.data.success) { setConsensusData(response.data); setShowConsensus(true) }
@@ -175,54 +178,92 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
 
   const labels = {
     en: {
-      title: 'Community Health Coordinator',
-      subtitle: 'Field Operations & Triage Assessment',
-      symptoms: 'Patient Symptoms',
-      patientInfo: 'Patient Profile',
-      age: 'Age', gender: 'Gender', village: 'Sector / Village',
-      labValues: 'Clinical Metrics',
-      glucose: 'Glucose', hba1c: 'HbA1c', bp: 'BP Systolic', cholesterol: 'Cholesterol', bmi: 'BMI', creatinine: 'Creatinine',
-      lifestyle: 'Risk Factors', smoking: 'Active Smoker',
-      familyDiabetes: 'Family: Diabetes', familyHeart: 'Family: Heart Disease',
-      analyze: 'Analyze Patient Data',
-      urgency: 'Triage Priority',
-      actions: 'Recommended Actions',
-      callScript: 'Handover Summary',
-      insights: 'AI Clinical Reasoning'
+      title: 'Community Health Coordinator', subtitle: 'Field Operations & Triage Assessment',
+      symptoms: 'Patient Symptoms', patientInfo: 'Patient Profile', age: 'Age', gender: 'Gender', village: 'Sector / Village',
+      labValues: 'Clinical Metrics', glucose: 'Glucose', hba1c: 'HbA1c', bp: 'BP Systolic', cholesterol: 'Cholesterol', bmi: 'BMI', creatinine: 'Creatinine',
+      lifestyle: 'Risk Factors', smoking: 'Active Smoker', familyDiabetes: 'Family: Diabetes', familyHeart: 'Family: Heart Disease',
+      analyze: 'Analyze Patient Data', urgency: 'Triage Priority', actions: 'Recommended Actions', callScript: 'Handover Summary', insights: 'AI Clinical Reasoning'
     },
     hi: {
-      title: 'ASHA स्मार्ट इंटेलिजेंस',
-      subtitle: 'विकेंद्रीकृत न्यूरल सपोर्ट मैट्रिक्स',
-      symptoms: 'लक्षण वेक्टर मूल्यांकन',
-      patientInfo: 'विटल्स और बायोमार्कर स्ट्रीम',
-      age: 'उम्र', gender: 'लिंग', village: 'क्षेत्र / गाँव',
-      labValues: 'नैदानिक मेट्रिक्स काउंसिल',
-      glucose: 'ग्लूकोज', hba1c: 'HbA1c', bp: 'रक्तचाप', cholesterol: 'कोलेस्ट्रॉल', bmi: 'बीएमआई', creatinine: 'क्रिएटिनिन',
-      lifestyle: 'पर्यावरणीय जोखिम', smoking: 'धूम्रपान',
-      familyDiabetes: 'आनुवंशिक: मधुमेह', familyHeart: 'आनुवंशिक: हृदय रोग',
-      analyze: 'न्यूरल प्रोटोकॉल शुरू करें',
-      urgency: 'सामरिक तात्कालिकता वेक्टर',
-      actions: 'रणनीतिक देखभाल मैट्रिक्स',
-      callScript: 'हैंडओवर प्रोटोकॉल v2.1',
-      insights: 'AI नैदानिक तर्क'
+      title: 'ASHA स्मार्ट इंटेलिजेंस', subtitle: 'विकेंद्रीकृत न्यूरल सपोर्ट मैट्रिक्स',
+      symptoms: 'लक्षण वेक्टर मूल्यांकन', patientInfo: 'विटल्स और बायोमार्कर स्ट्रीम', age: 'उम्र', gender: 'लिंग', village: 'क्षेत्र / गाँव',
+      labValues: 'नैदानिक मेट्रिक्स काउंसिल', glucose: 'ग्लूकोज', hba1c: 'HbA1c', bp: 'रक्तचाप', cholesterol: 'कोलेस्ट्रॉल', bmi: 'बीएमआई', creatinine: 'क्रिएटिनिन',
+      lifestyle: 'पर्यावरणीय जोखिम', smoking: 'धूम्रपान', familyDiabetes: 'आनुवंशिक: मधुमेह', familyHeart: 'आनुवंशिक: हृदय रोग',
+      analyze: 'न्यूरल प्रोटोकॉल शुरू करें', urgency: 'सामरिक तात्कालिकता वेक्टर', actions: 'रणनीतिक देखभाल मैट्रिक्स', callScript: 'हैंडओवर प्रोटोकॉल v2.1', insights: 'AI नैदानिक तर्क'
+    },
+    bn: {
+        title: 'আশা স্বাস্থ্য সমন্বয়কারী', subtitle: 'মাঠ পর্যায়ের অপারেশন এবং ট্রায়েজ',
+        symptoms: 'রোগীর লক্ষণসমূহ', patientInfo: 'রোগীর প্রোফাইল', age: 'বয়স', gender: 'লিঙ্গ', village: 'গ্রাম',
+        labValues: 'ক্লিনিক্যাল মেট্রিক্স', glucose: 'গ্লুকোজ', hba1c: 'HbA1c', bp: 'রক্তচাপ', cholesterol: 'কোলেস্টেরল', bmi: 'BMI', creatinine: 'ক্রিয়েটিনিন',
+        lifestyle: 'ঝুঁকির কারণ', smoking: 'ধূমপান', familyDiabetes: 'বংশগত: ডায়াবেটিস', familyHeart: 'বংশগত: হৃদরোগ',
+        analyze: 'বিশ্লেষণ করুন', urgency: 'ট্রায়েজ অগ্রাধিকার', actions: 'প্রস্তাবিত পদক্ষেপ', callScript: 'হস্তান্তর সারাংশ', insights: 'AI বিশ্লেষণ'
+    },
+    ta: {
+        title: 'ஆஷா சுகாதார ஒருங்கிணைப்பாளர்', subtitle: 'களச் செயல்பாடு மற்றும் மதிப்பீடு',
+        symptoms: 'நோயாளியின் அறிகுறிகள்', patientInfo: 'நோயாளி விவரங்கள்', age: 'வயது', gender: 'பாலினம்', village: 'கிராமம்',
+        labValues: 'மருத்துவ அளவீடுகள்', glucose: 'குளுக்கோஸ்', hba1c: 'HbA1c', bp: 'இரத்த அழுத்தம்', cholesterol: 'கொலஸ்ட்ரால்', bmi: 'BMI', creatinine: 'கிரியேட்டினின்',
+        lifestyle: 'ஆபத்து காரணிகள்', smoking: 'புகைப்பிடித்தல்', familyDiabetes: 'மரபணு: நீரிழிவு', familyHeart: 'மரபணு: இதயம்',
+        analyze: 'பகுப்பாய்வு செய்', urgency: 'முன்னுரிமை', actions: 'பரிந்துரைக்கப்படும் செயல்கள்', callScript: 'ஒப்படைப்பு சுருக்கம்', insights: 'AI மருத்துவ காரணம்'
+    },
+    te: {
+        title: 'ఆశా ఆరోగ్య సమన్వయకర్త', subtitle: 'క్షేత్ర స్థాయి కార్యకలాపాలు & అంచనా',
+        symptoms: 'రోగి లక్షణాలు', patientInfo: 'రోగి ప్రొఫైల్', age: 'వయసు', gender: 'లింగం', village: 'గ్రామం',
+        labValues: 'క్లినికల్ కొలమానాలు', glucose: 'గ్లూకోజ్', hba1c: 'HbA1c', bp: 'రక్తపోటు', cholesterol: 'కొలెస్ట్రాల్', bmi: 'BMI', creatinine: 'క్రియాటినిన్',
+        lifestyle: 'ప్రమాద కారకాలు', smoking: 'ధూమపానం', familyDiabetes: 'కుటుంబం: మధుమేహం', familyHeart: 'కుటుంబం: గుండె',
+        analyze: 'విశ్లేషించండి', urgency: 'ప్రాధాన్యత', actions: 'సూచించిన చర్యలు', callScript: 'సారాంశం', insights: 'AI విశ్లేషణ'
+    },
+    mr: {
+        title: 'आशा आरोग्य समन्वयक', subtitle: 'फील्ड ऑपरेशन्स आणि मूल्यांकन',
+        symptoms: 'रुग्णाची लक्षणे', patientInfo: 'रुग्ण प्रोफाइल', age: 'वय', gender: 'लिंग', village: 'गाव',
+        labValues: 'क्लीनिकल मेट्रिक्स', glucose: 'ग्लुकोज', hba1c: 'HbA1c', bp: 'रक्तदाब', cholesterol: 'कोलेस्ट्रॉल', bmi: 'BMI', creatinine: 'क्रिएटिनिन',
+        lifestyle: 'धोका घटक', smoking: 'धूम्रपान', familyDiabetes: 'अनुवांशिक: मधुमेह', familyHeart: 'अनुवांशिक: हृदयविकार',
+        analyze: 'विश्लेषण करा', urgency: 'प्राधान्य', actions: 'सुचवलेल्या कृती', callScript: 'सारांश', insights: 'AI विश्लेषण'
+    },
+    gu: {
+        title: 'આશા સ્વાસ્થ્ય સંયોજક', subtitle: 'ક્ષેત્ર કામગીરી અને મૂલ્યાંકન',
+        symptoms: 'દર્દીના લક્ષણો', patientInfo: 'દર્દીની પ્રોફાઇલ', age: 'ઉંમર', gender: 'લિંગ', village: 'ગામ',
+        labValues: 'ક્લિનિકલ મેટ્રિક્સ', glucose: 'ગ્લુકોઝ', hba1c: 'HbA1c', bp: 'બ્લડ પ્રેશર', cholesterol: 'કોલેસ્ટ્રોલ', bmi: 'BMI', creatinine: 'ક્રિએટિનાઇન',
+        lifestyle: 'જોખમ ના પરિબળો', smoking: 'ધૂમ્રપાન', familyDiabetes: 'પરિવાર: ડાયાબિટીસ', familyHeart: 'પરિવાર: હૃદય રોગ',
+        analyze: 'વિશ્લેષણ કરો', urgency: 'પ્રાધાન્યતા', actions: 'સૂચવેલા પગલાં', callScript: 'સારાંશ', insights: 'AI વિશ્લેષણ'
+    },
+    kn: {
+        title: 'ಆಶಾ ಆರೋಗ್ಯ ಸಂಯೋಜಕರು', subtitle: 'ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ಮತ್ತು ಮೌಲ್ಯಮಾಪನ',
+        symptoms: 'ರೋಗಿಯ ಲಕ್ಷಣಗಳು', patientInfo: 'ರೋಗಿಯ ಪ್ರೊಫೈಲ್', age: 'ವಯಸ್ಸು', gender: 'ಲಿಂಗ', village: 'ಹಳ್ಳಿ',
+        labValues: 'ಕ್ಲಿನಿಕಲ್ ಮೆಟ್ರಿಕ್ಸ್', glucose: 'ಗ್ಲೂಕೋಸ್', hba1c: 'HbA1c', bp: 'ರಕ್ತದೊತ್ತಡ', cholesterol: 'ಕೊಲೆಸ್ಟ್ರಾಲ್', bmi: 'BMI', creatinine: 'ಕ್ಯಾಟಿನೈನ್',
+        lifestyle: 'ಅಪಾಯ ಘಟಕಗಳು', smoking: 'ಧೂಮಪಾನ', familyDiabetes: 'ಕುಟುಂಬ: ಮಧುಮೇಹ', familyHeart: 'ಕುಟುಂಬ: ಹೃದಯ',
+        analyze: 'ವಿಶ್ಲೇಷಿಸಿ', urgency: 'ಆದ್ಯತೆ', actions: 'ಶಿಫಾರಸು ಮಾಡಿದ ಕ್ರಮಗಳು', callScript: 'ಸಾರಾಂಶ', insights: 'AI ವಿಶ್ಲೇಷಣೆ'
+    },
+    ml: {
+        title: 'ആശാ ആരോഗ്യ കോർഡിനേറ്റർ', subtitle: 'ഫീൽഡ് വിലയിരുത്തൽ',
+        symptoms: 'രോഗിയുടെ ലക്ഷണങ്ങൾ', patientInfo: 'രോഗിയുടെ പ്രൊഫൈൽ', age: 'പ്രായം', gender: 'ലിംഗം', village: 'ഗ്രാമം',
+        labValues: 'ക്ലിനിക്കൽ അളവുകൾ', glucose: 'ഗ്ലൂക്കോസ്', hba1c: 'HbA1c', bp: 'രക്തസമ്മർദ്ദം', cholesterol: 'കൊളസ്ട്രോൾ', bmi: 'BMI', creatinine: 'ക്രിയാറ്റിനിൻ',
+        lifestyle: 'അപകടസാധ്യത ഘടകങ്ങൾ', smoking: 'പുകവലി', familyDiabetes: 'കുടുംബം: പ്രമേഹം', familyHeart: 'കുടുംബം: ഹൃദയം',
+        analyze: 'വിശകലനം ചെയ്യുക', urgency: 'മുൻഗണന', actions: 'നിർദ്ദേശിച്ച പ്രവർത്തനങ്ങൾ', callScript: 'സംഗ്രഹം', insights: 'AI വിശകലനം'
+    },
+    pa: {
+        title: 'ਆਸ਼ਾ ਸਿਹਤ ਕੋਆਰਡੀਨੇਟਰ', subtitle: 'ਫੀਲਡ ਮੁਲਾਂਕਣ',
+        symptoms: 'ਮਰੀਜ਼ ਦੇ ਲੱਛਣ', patientInfo: 'ਮਰੀਜ਼ ਦੀ ਪ੍ਰੋਫਾਈਲ', age: 'ਉਮਰ', gender: 'ਲਿੰਗ', village: 'ਪਿੰਡ',
+        labValues: 'ਕਲੀਨਿਕਲ ਮੈਟ੍ਰਿਕਸ', glucose: 'ਗਲੂਕੋਜ਼', hba1c: 'HbA1c', bp: 'ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ', cholesterol: 'ਕੋਲੈਸਟ੍ਰੋਲ', bmi: 'BMI', creatinine: 'ਕ੍ਰੀਏਟੀਨਾਈਨ',
+        lifestyle: 'ਜੋਖਮ ਦੇ ਕਾਰਕ', smoking: 'ਸਿਗਰਟਨੋਸ਼ੀ', familyDiabetes: 'ਪਰਿਵਾਰ: ਸ਼ੂਗਰ', familyHeart: 'ਪਰਿਵਾਰ: ਦਿਲ',
+        analyze: 'ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ', urgency: 'ਤਰਜੀਹ', actions: 'ਸੁਝਾਏ ਗਏ ਕੰਮ', callScript: 'ਸੰਖੇਪ', insights: 'AI ਵਿਸ਼ਲੇਸ਼ਣ'
     }
   }
 
   const t = labels[language] || labels.en
 
   const symptomList = [
-    { key: 'fever', label: { en: 'Fever', hi: 'बुखार' }, icon: '🌡️' },
-    { key: 'cough', label: { en: 'Cough', hi: 'खांसी' }, icon: '😷' },
-    { key: 'breathing', label: { en: 'Dyspnea', hi: 'सांस में दिक्कत' }, icon: '🫁' },
-    { key: 'chest_pain', label: { en: 'Chest Pain', hi: 'सीने में दर्द' }, icon: '💔' },
-    { key: 'vomiting', label: { en: 'Vomiting', hi: 'उल्टी' }, icon: '🤮' },
-    { key: 'diarrhea', label: { en: 'Diarrhea', hi: 'दस्त' }, icon: '💩' },
-    { key: 'weakness', label: { en: 'Fatigue', hi: 'कमजोरी' }, icon: '😴' },
-    { key: 'unconscious', label: { en: 'Unconscious', hi: 'बेहोशी' }, icon: '😵' },
-    { key: 'bleeding', label: { en: 'Bleeding', hi: 'रक्तस्राव' }, icon: '🩸' },
-    { key: 'high_fever', label: { en: 'Severe Fever', hi: 'तेज बुखार' }, icon: '🔥' },
-    { key: 'swelling', label: { en: 'Swelling', hi: 'सूजन' }, icon: '🦵' },
-    { key: 'back_pain', label: { en: 'Back Pain', hi: 'पीठ दर्द' }, icon: '🔙' }
+    { key: 'fever', label: { en: 'Fever', hi: 'बुखार', bn: 'জ্বর', ta: 'காய்ச்சல்', te: 'జ్వరం', mr: 'ताप', gu: 'તાવ', kn: 'ಜ್ವರ', ml: 'പനി', pa: 'ਬੁਖਾਰ' }, icon: '🌡️' },
+    { key: 'cough', label: { en: 'Cough', hi: 'खांसी', bn: 'কাশি', ta: 'இருமல்', te: 'దగ్గు', mr: 'खोकला', gu: 'ઉધરસ', kn: 'ಕೆಮ್ಮು', ml: 'ചുമ', pa: 'ਖੰਘ' }, icon: '😷' },
+    { key: 'breathing', label: { en: 'Dyspnea', hi: 'सांस में दिक्कत', bn: 'শ্বাসকষ্ট', ta: 'மூச்சுத் திணறல்', te: 'శ్వాస తీసుకోవడంలో ఇబ్బంది', mr: 'श्वास घेण्यास त्रास', gu: 'શ્વાસ લેવામાં તબકલીફ', kn: 'ಉಸಿರಾಟದ ತೊಂದರೆ', ml: 'ശ്വാസതടസ്സം', pa: 'ਸਾਹ ਦੀ ਤਕਲੀਫ' }, icon: '🫁' },
+    { key: 'chest_pain', label: { en: 'Chest Pain', hi: 'सीने में दर्द', bn: 'বুকে ব্যথা', ta: 'நெஞ்சு வலி', te: 'ఛాతీ నొప్పి', mr: 'छातीत दुखणे', gu: 'છાતીમાં દુખાવો', kn: 'ಎದೆ ನೋವು', ml: 'നെഞ്ചുവേദന', pa: 'ਛਾਤੀ ਵਿਚ ਦਰਦ' }, icon: '💔' },
+    { key: 'vomiting', label: { en: 'Vomiting', hi: 'उल्टी', bn: 'বমি', ta: 'வாந்தி', te: 'వాంతులు', mr: 'उलट्या', gu: 'ઉલટી', kn: 'ವಾಂತಿ', ml: 'ഛർദ്ദി', pa: 'ਉਲਟੀ' }, icon: '🤮' },
+    { key: 'diarrhea', label: { en: 'Diarrhea', hi: 'दस्त', bn: 'ডায়রিয়া', ta: 'வயிற்றுப்போக்கு', te: 'విరేచనాలు', mr: 'अतिसार', gu: 'ઝાડા', kn: 'ಅತಿಸಾರ', ml: 'അതിസാരം', pa: 'ਦਸਤ' }, icon: '💩' },
+    { key: 'weakness', label: { en: 'Fatigue', hi: 'कमजोरी', bn: 'ক্লান্তি', ta: 'சோர்வு', te: 'అలసట', mr: 'थकवा', gu: 'થાક', kn: 'ಆಯಾಸ', ml: 'ക്ഷീണം', pa: 'ਥਕਾਵਟ' }, icon: '😴' },
+    { key: 'unconscious', label: { en: 'Unconscious', hi: 'बेहोशी', bn: 'অজ্ঞান', ta: 'மயக்கம்', te: 'అపస్మారక స్థితి', mr: 'बेशुद्ध', gu: 'બેભાન', kn: 'ಪ್ರಜ್ಞಾಹೀನ', ml: 'ബോധക്ഷയം', pa: 'ਬੇਹੋਸ਼' }, icon: '😵' },
+    { key: 'bleeding', label: { en: 'Bleeding', hi: 'रक्तस्राव', bn: 'রক্তপাত', ta: 'இரத்தப்போக்கு', te: 'రక్తస్రావం', mr: 'रक्तस्त्राव', gu: 'રક્તસ્ત્રાવ', kn: 'ರಕ್ತಸ್ರಾವ', ml: 'രക്തസ്രാവം', pa: 'ਖੂਨ ਵਗਣਾ' }, icon: '🩸' },
+    { key: 'high_fever', label: { en: 'Severe Fever', hi: 'तेज बुखार', bn: 'তীব্র জ্বর', ta: 'கடுமையான காய்ச்சல்', te: 'తీవ్రమైన జ్వరం', mr: 'तीव्र ताप', gu: 'વધુ તાવ', kn: 'ತೀವ್ರ ಜ್ವರ', ml: 'കടുത്ത പനി', pa: 'ਤੇਜ਼ ਬੁਖਾਰ' }, icon: '🔥' },
+    { key: 'swelling', label: { en: 'Swelling', hi: 'सूजन', bn: 'ফোলা', ta: 'வீக்கம்', te: 'వాపు', mr: 'सूज', gu: 'સોજો', kn: 'ಊತ', ml: 'വീക്കം', pa: 'ਸੋਜ' }, icon: '🦵' },
+    { key: 'back_pain', label: { en: 'Back Pain', hi: 'पीठ दर्द', bn: 'পিঠে ব্যথা', ta: 'முதுகு வலி', te: 'వెన్నునొప్పి', mr: 'पाठदुखी', gu: 'પીઠનો દુખાવો', kn: 'ಬೆನ್ನು ನೋವು', ml: 'നടുവേദന', pa: 'ਪਿੱਠ ਦਰਦ' }, icon: '🔙' }
   ]
 
   const getUrgencyColors = (urgency) => {
@@ -245,7 +286,7 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
                 <div>
                    <div className="inline-flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full mb-2">
                       <Globe className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest pt-0.5">Community Network: Active</span>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest pt-0.5">{globalT.communityNetwork}</span>
                    </div>
                    <h2 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-1">{t.title}</h2>
                    <p className="text-sm font-semibold text-[var(--text-secondary)]">{t.subtitle}</p>
@@ -426,7 +467,7 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
                            <div className="relative">
                               <div className="flex justify-between items-start mb-4">
                                 <div>
-                                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">Priority</p>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{globalT.priority}</p>
                                   <h4 className="text-3xl font-black">{result.urgency}</h4>
                                 </div>
                                 <div className="p-3 bg-white/50 rounded-xl">
@@ -471,7 +512,7 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
                             >
                                <div className="flex items-center space-x-3">
                                   <Cpu className="w-5 h-5" />
-                                  <span className="font-semibold text-sm">Consult Doctor</span>
+                                  <span className="font-semibold text-sm">{globalT.consultDoctor}</span>
                                </div>
                                {consensusLoading ? <Activity className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
                             </button>
@@ -481,13 +522,13 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
                                  onClick={() => onNavigate('chat')}
                                  className="btn-secondary py-2 text-xs text-blue-600"
                                >
-                                 Open Chat
+                                 {globalT.openChat}
                                </button>
                                <button 
                                  onClick={() => onNavigate('plan')}
                                  className="btn-secondary py-2 text-xs"
                                >
-                                 Create Plan
+                                 {globalT.createPlan}
                                </button>
                             </div>
                          </div>
@@ -509,7 +550,7 @@ function AshaMode({ language = 'en', selectedPatient = null, onNavigate = () => 
                           <Stethoscope className="w-10 h-10 text-blue-300" />
                         </div>
                         <div className="space-y-2">
-                          <h4 className="text-sm font-bold text-[var(--text-primary)]">Ready for Assessment</h4>
+                          <h4 className="text-sm font-bold text-[var(--text-primary)]">{globalT.readyForAssessment}</h4>
                           <p className="text-xs text-[var(--text-muted)] font-medium max-w-[200px] leading-relaxed mx-auto">Select symptoms and enter bio-data to begin triage.</p>
                         </div>
                      </div>

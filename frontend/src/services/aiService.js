@@ -58,7 +58,7 @@ class aiService {
    */
   async chatWithAI(message, patientContext = null, history = [], language = "en") {
     const langName = languageMap[language] || "English";
-    const languageInstruction = `IMPORTANT: Respond in ${langName} language only. Use Devanagari script for Hindi.`;
+    const languageInstruction = `CRITICAL INSTRUCTION: You MUST respond ONLY in ${langName}. If the language is not English, DO NOT enclose your response in English text. Use native scripts (e.g., Devanagari for Hindi). Ensure medical terminology is accurate in ${langName}.`;
     const fullSystemPrompt = MEDICAL_SYSTEM_PROMPT + "\n\n" + languageInstruction;
     const contextMsg = patientContext ? `Patient Bio-Data: ${JSON.stringify(patientContext)}` : "";
     const finalInput = `${fullSystemPrompt}\n\n${contextMsg}\n\nUSER QUERY: ${message}`;
@@ -179,7 +179,8 @@ class aiService {
    */
   async analyzeReport(file, fileType, language = "en") {
     const langName = languageMap[language] || "English";
-    const prompt = `Perform an authoritative clinical analysis of this medical report. Extract vitals, findings, and diagnosis. Respond entirely in ${langName}.`;
+    const prompt = `Perform an authoritative clinical analysis of this medical report. Extract vitals, findings, and diagnosis. 
+CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accurate medical terminology.`;
     
     let lastError = null;
 
@@ -221,7 +222,8 @@ class aiService {
   }
 
   async generateTreatmentPlan(data, lang = "en") {
-    return this.chatWithAI("Create a rigid 7-day clinical protocol.", data, [], lang);
+    const langName = languageMap[lang] || "English";
+    return this.chatWithAI(`Create a rigid 7-day clinical protocol. It MUST be written entirely in ${langName}.`, data, [], lang);
   }
 
   async analyzeASHACase(data, symptoms, lang = "en") {

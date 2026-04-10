@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
 import { Mic, Square, Play, AlertCircle, Volume2, Settings, Download, Brain, Sparkles, Activity, ShieldCheck, ArrowRight } from 'lucide-react'
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
+import { languageMap } from '../services/aiService'
+import { getT } from '../utils/translations'
 
 function VoiceInput({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
   const [isListening, setIsListening] = useState(false)
@@ -59,6 +61,7 @@ function VoiceInput({ language = 'en', selectedPatient = null, onNavigate = () =
   }
 
   const t = labels[language] || labels.en
+  const globalT = getT(language)
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   const isSupported = !!SpeechRecognition
@@ -200,8 +203,8 @@ function VoiceInput({ language = 'en', selectedPatient = null, onNavigate = () =
           cholesterol: 200,
           creatinine: 1.0,
           smoking: 0,
-          family_history_diabetes: 0,
-          family_history_heart: 0
+          family_history_heart: 0,
+          language: languageMap[language] || 'english'
         },
         symptoms: symptoms
       })
@@ -214,9 +217,7 @@ function VoiceInput({ language = 'en', selectedPatient = null, onNavigate = () =
             message = analysisResponse.data.ai_insights
         } else {
             const urgencyText = analysisResponse.data.urgency_text
-            message = language === 'hi' 
-                ? `आपका स्वास्थ्य स्तर ${urgencyText} है। मुख्य निर्देश यह हैं: ${analysisResponse.data.actions[0]}।`
-                : `Your health level is ${urgencyText}. Key instructions: ${analysisResponse.data.actions[0]}.`
+            message = `${globalT.yourHealthLevel} ${urgencyText}. ${analysisResponse.data.actions[0]}.`
         }
         
         await speakText(message)

@@ -24,9 +24,11 @@ import {
 } from 'lucide-react'
 
 import { API_URL } from '../config'
-import aiService from '../services/aiService'
+import aiService, { languageMap } from '../services/aiService'
+import { getT } from '../utils/translations'
 
 function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
+  const globalT = getT(language);
   const [file, setFile] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -56,7 +58,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
     }
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('language', language === 'hi' ? 'hindi' : 'english')
+    formData.append('language', languageMap[language] || 'english')
     setLoading(true)
     setError(null)
     try {
@@ -110,10 +112,10 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
         <div className="space-y-2">
           <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
             <Microscope className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-xs font-semibold text-blue-700 uppercase">Document Analysis</span>
+            <span className="text-xs font-semibold text-blue-700 uppercase">{globalT.documentAnalysis}</span>
           </div>
           <h2 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
-            Clinical <span className="text-blue-600">Report Lab</span>
+            {globalT.clinicalReportLab}
           </h2>
           <p className="text-sm text-[var(--text-muted)] font-medium">AI analysis of clinical biomarkers and diagnostic imaging.</p>
         </div>
@@ -142,7 +144,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
             <div className="relative">
                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-6 flex items-center gap-2">
                   <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
-                  Document Upload
+                  {globalT.documentUpload}
                </h3>
                
                <div 
@@ -162,7 +164,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
                  </div>
                  
                  <p className={`text-sm font-semibold text-center ${file ? 'text-emerald-700' : 'text-slate-600'}`}>
-                   {file ? file.name : (language === 'hi' ? 'रिपोर्ट यहाँ ड्रॉप करें' : 'Select Medical Report')}
+                   {file ? file.name : globalT.selectMedicalReport}
                  </p>
                  <p className="text-xs text-slate-400 mt-2">Dicom, PDF, Images (Max 20MB)</p>
                </div>
@@ -173,7 +175,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
                  className="btn-primary w-full mt-6 py-4 flex items-center justify-center space-x-2"
                >
                  {loading ? <Activity className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                 <span>{loading ? 'Analyzing...' : (language === 'hi' ? 'विश्लेषण शुरू करें' : 'Analyze Document')}</span>
+                 <span>{loading ? globalT.analyzing : globalT.analyzeDocument}</span>
                </button>
 
                {error && (
@@ -238,7 +240,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
                            <Microscope className="w-7 h-7 text-blue-600" />
                         </div>
                         <div>
-                           <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Analysis Results</h3>
+                           <h3 className="text-2xl font-bold text-slate-800 tracking-tight">{globalT.analysisResults}</h3>
                            <div className="flex items-center space-x-2 mt-1">
                               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Verified Extraction</span>
@@ -291,19 +293,19 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
                           onClick={() => onNavigate('chat', { type: 'Lab Report Analysis', analysis: analysis, file: file?.name })}
                           className="btn-primary py-3 px-4 text-xs flex justify-center w-full"
                         >
-                          Send to Doctor
+                          {globalT.sendToDoctor}
                         </button>
                         <button 
                           onClick={() => onNavigate('plan')}
                           className="btn-secondary py-3 px-4 text-xs flex justify-center w-full"
                         >
-                          Generate Plan
+                          {globalT.generatePlan}
                         </button>
                         <button 
                           onClick={() => alert('Download Sequence Initialized')}
                           className="bg-white border border-slate-300 text-slate-700 py-3 px-4 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex justify-center w-full col-span-2 lg:col-span-1"
                         >
-                          Download Analysis
+                          {globalT.downloadAnalysis}
                         </button>
                       </div>
                    </div>

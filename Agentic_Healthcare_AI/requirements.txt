@@ -1,8 +1,9 @@
 # Core ML and Data
 pandas>=1.5.0
 numpy>=1.23.0
-scikit-learn>=1.2.0
+scikit-learn==1.8.0
 joblib>=1.2.0
+xgboost==2.0.2
 
 # Streamlit
 streamlit>=1.28.0
