@@ -9,27 +9,24 @@ from datetime import datetime
 from .config import settings
 
 # Professional Clinical Diagnostic Persona (Global)
-MEDICAL_SYSTEM_PROMPT = """You are a Board-Certified Senior Medical Specialist within the Agentic AI Hospital OS.
+MEDICAL_SYSTEM_PROMPT = """You are the Senior Chief Medical Consultant of the Agentic AI Hospital OS.
 Your role:
-- Conduct an authoritative clinical synthesis and diagnostic assessment of patient telemetry.
-- Provide highly structured medical evidence according to international clinical standards (WHO, CDC, ICD-10).
-- Maintain a highly professional, clinical, and precise tone, similar to a lead consultant during hospital rounds.
+- Conduct an **Exhaustive Level 4 Clinical Synthesis** of all patient biomarkers and imaging findings.
+- Provide a deep physiological interpretation of findings, explaining the 'Mechanism of Action' for any abnormalities.
+- Maintain an authoritative, professional, and empathetic clinical persona.
 
-Clinical Encounter Protocol (Always follow this structure):
-1. **SUBJECTIVE**: Detailed summary of reported symptoms, history, and patient experience.
-2. **OBJECTIVE**: Direct analysis of numerical vitals (Glucose, BP, Cholesterol, etc.) and ML risk coefficients.
-3. **CLINICAL ASSESSMENT (Impression)**: An authoritative synthesis of the Subjective vs Objective data. Identify the primary clinical impression.
-4. **RECOMMENDED PROTOCOL (PLAN)**: 
-   - Immediate non-negotiable interventions.
-   - 7-day monitoring schedule.
-   - Long-term preventative metrics.
-   - Recommended evidence-based lifestyle adjustments (diet, activity).
+Strict Output Protocol:
+1. **EXHAUSTIVE EXTRACTION**: Identify every single clinical biomarker, signal, and anomaly.
+2. **PHYSIOLOGICAL CONTEXT**: Explain what each finding means for the patient's long-term health.
+3. **DIFFERENTIAL SUMMARY**: Synthesize the findings into a highly detailed clinical impression.
+4. **CHIEF ACTION PLAN**: Provide non-negotiable medical next-steps and preventive roadmaps.
 
-Key Guidelines:
-✅ CITE standard medical protocols (e.g., 'In accordance with current WHO hypertension guidelines').
-✅ EXPLAIN complex physiology concisely.
-✅ USE precise medical terminology followed by a parenthetical clarification.
-✅ ALWAYS conclude with: "SYSTEM NOTICE: This is an AI-generated clinical impression. Mandatory specialist verification is required." """
+Language Protocol:
+- If a native language (e.g., Hindi, Tamil) is selected, you MUST respond **100% in that native script**.
+- ZERO English words or letters should be used in the native response. Translate medical terms into clear native equivalents.
+- Ensure the tone is 'Prashasnik' (Administrative/Authoritative) and 'Vaigyanik' (Scientific).
+
+ALWAYS conclude with: "SYSTEM NOTICE: This is an exhaustive AI-generated clinical synthesis. Mandatory verification by a human medical specialist is required before intervention." """
 
 class GroqClient:
     """
@@ -190,16 +187,14 @@ class HealthcareAI:
         Primary Diagnostic Interface: Direct Groq Llama Logic.
         """
         # Map code to full name
-        language_map = {
-            "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
-            "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati", "kn": "Kannada",
-            "ml": "Malayalam", "pa": "Punjabi"
+        language_full = {
+            "en": "English", "hi": "Hindi (Devanagari Script)", "ta": "Tamil (தமிழ் स्क्रिप्ट)", 
+            "te": "Telugu", "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati", 
+            "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
         }
-        language_name = language_map.get(language.lower(), language)
+        language_name = language_full.get(language.lower(), language)
         
-        lang_instruction = f"IMPORTANT: Respond in {language_name} language only. Use simple {language_name} terms. Native script ONLY."
-        if language_name.lower() in ["pure hindi (हिंदी)", "hindi"]:
-            lang_instruction = "CRITICAL: You MUST respond EXCLUSIVELY in pure Hindi using the Devanagari script. No English letters."
+        lang_instruction = f"CRITICAL: Respond EXCLUSIVELY in the official {language_name} script. Do NOT use English letters or code-switching. Use professional medical terminology translated correctly into {language_name}."
         
         full_sys_prompt = (system_prompt or MEDICAL_SYSTEM_PROMPT) + "\n\n" + lang_instruction
         
@@ -289,12 +284,23 @@ class HealthcareAI:
 
     @staticmethod
     async def analyze_medical_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
-        """Direct Groq Llama-3.2-90B-Vision Analysis (with compression)"""
+        """Direct Groq Llama-4-Scout Vision Analysis (Exhaustive Edition)"""
         
         # Step 1: Optimize for vision payload
         optimized_content = HealthcareAI.process_image_for_vision(file_content)
         
-        prompt = f"Perform a high-precision medical report analysis in {language}. Extract ALL biomarkers and provide clinical context."
+        prompt = f"""Conduct an EXHAUSTIVE Clinical Diagnostic Synthesis of this medical report.
+        Target Language: {language}
+
+        REQUIRED SECTIONS (In {language} script):
+        1. **PATIENT METRICS**: Extract name, age, and ID if present.
+        2. **DETAILED BIOMARKER EXTRACTION**: Identify ALL anatomical findings and numerical values.
+        3. **CLINICAL PHYSIOLOGY**: Explain the physiological meaning of each finding. For example, if a disc bulge is found, explain the impact on nerve roots.
+        4. **SPECIALIST IMPRESSION**: A deep-dive clinical assessment.
+        5. **PREVENTIVE ROADMAP**: Step-by-step actions for the patient.
+
+        CRITICAL: Provide AT LEAST 500 words of clinical detail. Be exhaustive. No English letters in native script outputs."""
+        
         result = await GroqClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
         
         if result["success"]:

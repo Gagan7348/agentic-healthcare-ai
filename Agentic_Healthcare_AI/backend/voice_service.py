@@ -116,43 +116,60 @@ class VoiceService:
         if not GTTS_AVAILABLE:
             raise Exception("gTTS not available")
         
+    @staticmethod
+    def _preprocess_text_for_speech(text: str) -> str:
+        """Clean text for natural TTS pronunciation (removes markdown, etc.)"""
+        import re
+        # Remove markdown bold/italic
+        text = text.replace("**", "").replace("__", "").replace("*", "").replace("_", "")
+        # Remove headers
+        text = re.sub(r'^#+ ', '', text, flags=re.MULTILINE)
+        # Remove list markers
+        text = re.sub(r'^\d+\. ', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^- ', '', text, flags=re.MULTILINE)
+        # Remove redundant spaces and symbols
+        text = text.replace("✅", "").replace("❌", "").replace("📡", "").replace("🚀", "")
+        return text.strip()
+
+    @staticmethod
+    def text_to_speech(text: str, language: str = "hi") -> bytes:
+        """
+        Convert text to speech using ElevenLabs Multilingual V2
+        Supports 29+ languages including Hindi, Tamil, etc.
+        """
+        if not GTTS_AVAILABLE:
+            raise Exception("gTTS fallback not available")
+        
+        # Pre-process for better pronunciation
+        clean_text = VoiceService._preprocess_text_for_speech(text)
+        
         try:
             # OPTION 1: ElevenLabs (High Fidelity Neural Voice)
             if ELEVENLABS_AVAILABLE and settings.ELEVENLABS_API_KEY:
                 try:
                     client = ElevenLabs(api_key=settings.ELEVENLABS_API_KEY)
-                    # Generate audio using v2 client
+                    # Use 'Rachel' Voice ID for professional female consultant
+                    # Multilingual V2 automatically detects and speaks the script naturally
                     audio_generator = client.text_to_speech.convert(
-                        voice_id="21m00Tcm4TlvDq8ikWAM", # 'Rachel' - very clear medical voice
-                        text=text,
-                        model_id="eleven_multilingual_v2"
+                        voice_id="21m00Tcm4TlvDq8ikWAM", 
+                        text=clean_text,
+                        model_id="eleven_multilingual_v2",
+                        output_format="mp3_44100_128"
                     )
-                    # Convert generator to bytes
                     audio = b"".join(list(audio_generator))
-                    logger.info(f"OK: Generated ElevenLabs voice ({language})")
+                    logger.info(f"OK: ElevenLabs Synthesis Complete ({language})")
                     return audio
                 except Exception as e:
-                    logger.warning(f"ElevenLabs Fallback to gTTS: {e}")
+                    logger.warning(f"ElevenLabs Error: {e}. Falling back to gTTS.")
 
             # OPTION 2: gTTS (Standard Multilingual)
-            if not GTTS_AVAILABLE:
-                raise Exception("gTTS not available")
-                
-            # Get language code for gTTS
             gtts_lang = language if language != "en" else "en"
+            tts = gTTS(text=clean_text, lang=gtts_lang, slow=False)
             
-            # Create gTTS object
-            tts = gTTS(text=text, lang=gtts_lang, slow=False)
-            
-            # Save to bytes
             audio_fp = io.BytesIO()
             tts.write_to_fp(audio_fp)
             audio_fp.seek(0)
-            
-            audio_data = audio_fp.read()
-            
-            logger.info(f"OK: Generated gTTS speech ({language}): {len(audio_data)} bytes")
-            return audio_data
+            return audio_fp.read()
             
         except Exception as e:
             logger.error(f"TTS error: {e}")
