@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../config";
 
-console.log("🚀 AGENTIC AI: Stability Patch V7 Active (Gemini Native + Groq Fallback Engine)");
+console.log("🚀 AGENTIC AI: Stability Patch V8 Active (Gemini Native + Groq Fallback Engine)");
 
 export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
