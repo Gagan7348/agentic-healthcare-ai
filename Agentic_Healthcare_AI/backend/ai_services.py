@@ -142,6 +142,78 @@ class GroqClient:
             print(f"FAILED: Groq Vision Exception: {str(e)}")
             return {"success": False, "error": f"Groq Vision System Error: {str(e)}"}
 
+class GeminiClient:
+    """Direct Client for Google Gemini API via HTTPX"""
+    BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+
+    @staticmethod
+    async def chat_completion(messages: List[Dict[str, str]], temperature: float = 0.3) -> Dict[str, Any]:
+        if not settings.has_gemini_key:
+            return {"success": False, "error": "GEMINI_API_KEY not configured"}
+            
+        contents = []
+        system_instruction = None
+        for msg in messages:
+            if msg["role"] == "system":
+                system_instruction = {"parts": [{"text": msg["content"]}]}
+            else:
+                role = "user" if msg["role"] == "user" else "model"
+                contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+        
+        payload = {"contents": contents, "generationConfig": {"temperature": temperature}}
+        if system_instruction:
+            payload["systemInstruction"] = system_instruction
+            
+        try:
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{GeminiClient.BASE_URL}/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
+                    json=payload
+                )
+                
+                if response.status_code != 200:
+                    return {"success": False, "error": f"Gemini API Error: {response.text}"}
+                
+                data = response.json()
+                text = data["candidates"][0]["content"]["parts"][0].get("text", "")
+                return {"success": True, "content": text, "model": "gemini-1.5-flash"}
+        except Exception as e:
+            return {"success": False, "error": f"Gemini Direct Error: {str(e)}"}
+
+    @staticmethod
+    async def vision_analysis(prompt: str, image_bytes: bytes, file_type: str, language: str = "english") -> Dict[str, Any]:
+        if not settings.has_gemini_key:
+            return {"success": False, "error": "GEMINI_API_KEY not configured"}
+            
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        mime_type = "image/jpeg" if file_type != "application/pdf" else "application/pdf"
+            
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inlineData": {"mimeType": mime_type, "data": base64_image}}
+                ]
+            }],
+            "generationConfig": {"temperature": 0.2}
+        }
+        
+        try:
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{GeminiClient.BASE_URL}/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
+                    json=payload
+                )
+                
+                if response.status_code != 200:
+                    return {"success": False, "error": f"Gemini Vision API Error: {response.text}"}
+                    
+                data = response.json()
+                text = data["candidates"][0]["content"]["parts"][0].get("text", "")
+                return {"success": True, "content": text, "model": "gemini-1.5-flash"}
+        except Exception as e:
+            return {"success": False, "error": f"Gemini Vision Error: {str(e)}"}
+
 class HealthcareAI:
     """Refactored Healthcare AI Service: Exclusive Direct Groq Llama Integration"""
 
@@ -215,7 +287,18 @@ class HealthcareAI:
         
         messages.append({"role": "user", "content": f"{context_str}Query: {message}"})
         
-        result = await GroqClient.chat_completion(messages, model=settings.GROQ_MODEL)
+        # Primary Routing: Attempt Gemini first, fallback to Groq
+        result = None
+        if settings.has_gemini_key:
+            result = await GeminiClient.chat_completion(messages)
+            if result.get("success"):
+                result["agent_status"] = "Google Gemini Engine Active"
+                
+        if not result or not result.get("success"):
+            print("Fallback to Groq Chat...")
+            result = await GroqClient.chat_completion(messages, model=settings.GROQ_MODEL)
+            if result.get("success"):
+                result["agent_status"] = "Groq Llama Engine Active (Fallback)"
         
         if result["success"]:
             return {
@@ -253,21 +336,35 @@ class HealthcareAI:
             context = f"Patient: {json.dumps(patient_data)}. Symptoms: {json.dumps(symptoms)}. Risks: {json.dumps(predictions)}."
             
             async def get_specialist_view(role_name: str, role_task: str):
-                resp = await GroqClient.chat_completion([
+                messages = [
                     {"role": "system", "content": f"You are {role_name}. {role_task}"},
                     {"role": "user", "content": f"Assess this case: {context}"}
-                ])
-                return resp["content"] if resp["success"] else "Consultation Pending..."
+                ]
+                
+                resp = None
+                if settings.has_gemini_key:
+                    resp = await GeminiClient.chat_completion(messages)
+                if not resp or not resp.get("success"):
+                    resp = await GroqClient.chat_completion(messages)
+                    
+                return resp["content"] if resp and resp.get("success") else "Consultation Pending..."
 
             cortex = await get_specialist_view("Dr. Cortex (Clinical Strategist)", "Provide a 2-sentence clinical diagnosis.")
             vitalis = await get_specialist_view("Dr. Vitalis (ML Analyst)", "Summarize the machine learning risk coefficients in 2 sentences.")
             synapse = await get_specialist_view("Dr. Synapse (WHO Protocol Specialist)", "Suggest international treatment guidelines for this profile in 2 sentences.")
             
             # Final Synthesis
-            final_resp = await GroqClient.chat_completion([
+            final_msgs = [
                 {"role": "system", "content": "You are the Chief Clinical Synthesizer. Merge these three specialist inputs into a final 3-sentence clinical directive."},
                 {"role": "user", "content": f"Specialist Inputs: {cortex}, {vitalis}, {synapse}. Case Context: {context}"}
-            ])
+            ]
+            
+            final_resp = None
+            if settings.has_gemini_key:
+                final_resp = await GeminiClient.chat_completion(final_msgs)
+            if not final_resp or not final_resp.get("success"):
+                final_resp = await GroqClient.chat_completion(final_msgs)
+            
             
             return {
                 "success": True,
@@ -306,7 +403,18 @@ class HealthcareAI:
         - DO NOT cut sentences short. 
         - No English letters in native script outputs."""
         
-        result = await GroqClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
+        # Primary Routing: Attempt Gemini first, fallback to Groq
+        result = None
+        if settings.has_gemini_key:
+            result = await GeminiClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
+            if result.get("success"):
+                result["agent_status"] = "Google Gemini Vision Active"
+        
+        if not result or not result.get("success"):
+            print("Fallback to Groq Vision...")
+            result = await GroqClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
+            if result.get("success"):
+                result["agent_status"] = "Groq Vision Engine Active (Fallback)"
         
         if result["success"]:
             return {
