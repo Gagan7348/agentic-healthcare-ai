@@ -1,37 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 import { API_URL } from "../config";
 
-// Configuration for AI Council
-const DEFAULT_MODEL = "gemini-2.0-flash"; // Upgraded for 2026 Stability
-const BACKUP_KEY = "AIzaSyBitVCSzJlSwwaQVrvfx2Qw32flej6yydU";
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || BACKUP_KEY;
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-
-console.log("🚀 AGENTIC AI: Stability Patch V3 Active (Backend-First Routing)");
-
-// Professional Clinical Diagnostic Persona
-const MEDICAL_SYSTEM_PROMPT = `You are a Board-Certified Senior Medical Specialist within the Agentic AI Hospital OS.
-Your role:
-- Conduct an authoritative clinical synthesis and diagnostic assessment of patient telemetry.
-- Provide highly structured medical evidence according to international clinical standards (WHO, CDC, ICD-10).
-- Maintain a highly professional, clinical, and precise tone, similar to a lead consultant during hospital rounds.
-
-Clinical Encounter Protocol (Always follow this structure):
-1. **SUBJECTIVE**: Detailed summary of reported symptoms, history, and patient experience.
-2. **OBJECTIVE**: Direct analysis of numerical vitals (Glucose, BP, Cholesterol, etc.) and ML risk coefficients.
-3. **CLINICAL ASSESSMENT (Impression)**: An authoritative synthesis of the Subjective vs Objective data. Identify the primary clinical impression.
-4. **RECOMMENDED PROTOCOL (PLAN)**: 
-   - Immediate non-negotiable interventions.
-   - 7-day monitoring schedule.
-   - Long-term preventative metrics.
-   - Recommended evidence-based lifestyle adjustments (diet, activity).
-
-Key Guidelines:
-✅ CITE standard medical protocols (e.g., 'In accordance with current WHO hypertension guidelines').
-✅ EXPLAIN complex physiology concisely - do not simplify to the point of losing clinical accuracy.
-✅ USE precise medical terminology followed by a parenthetical clarification for the layperson (e.g., 'Tachycardia (Rapid Heart Rate)').
-✅ ALWAYS conclude with a clear warning: "SYSTEM NOTICE: This is an AI-generated clinical impression. Mandatory specialist verification is required for final diagnosis and medication initiation."`;
+console.log("🚀 AGENTIC AI: Stability Patch V4 Active (Grok Exclusive - Backend Only)");
 
 export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
@@ -40,38 +10,16 @@ export const languageMap = {
 };
 
 /**
- * Frontend AI Service: Communicates directly with AI SDKs
+ * Frontend AI Service: Enforces Backend-First Routing to the Grok API.
+ * This prevents client-side 429 Errors and keeps API keys secure.
  */
 class aiService {
-  constructor() {
-    // v1beta supports ALL Gemini models including 1.5-flash, 1.5-pro, 2.0-flash
-    this.genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
-    this.models = [
-        "gemini-2.0-flash",           // Primary — latest fast model
-        "gemini-2.0-flash-lite",      // Lite fallback variant
-        "gemini-flash-latest",        // Stable flash fallback (no 1.5- suffix required on this API tier)
-        "gemini-pro-latest"           // Legacy advanced fallback
-    ];
-    this.workingModel = null;
-  }
-
   /**
-   * Core Hybrid Chat Engine: Tries Gemini Council first, falls back to OpenAI
+   * Core Chat Engine: Routes directly to the Grok-powered Backend
    */
   async chatWithAI(message, patientContext = null, history = [], language = "en") {
-    const langName = languageMap[language] || "English";
-    const languageInstruction = `CRITICAL INSTRUCTION: You MUST respond ONLY in ${langName}. If the language is not English, DO NOT enclose your response in English text. Use native scripts (e.g., Devanagari for Hindi). Ensure medical terminology is accurate in ${langName}.`;
-    const fullSystemPrompt = MEDICAL_SYSTEM_PROMPT + "\n\n" + languageInstruction;
-    const contextMsg = patientContext ? `Patient Bio-Data: ${JSON.stringify(patientContext)}` : "";
-    const finalInput = `${fullSystemPrompt}\n\n${contextMsg}\n\nUSER QUERY: ${message}`;
+    console.log(`📡 ROUTING: Clinical Consultation via Grok Cloud (${API_URL})...`);
     
-    let lastError = null;
-
-    // NEW STEP 1: Attempt Cloud Backend (FastAPI - Port 8000)
-    // This is the preferred method as it uses server-side keys
-    console.log(`📡 ROUTING: AI Council request via Cloud Backend (${API_URL})...`);
-    
-    // Ensure patient_data meets FastAPI schema (requires age, gender at minimum)
     let safePatientData = null;
     if (patientContext) {
       safePatientData = {
@@ -82,7 +30,7 @@ class aiService {
     }
 
     try {
-      const backendResponse = await axios.post(`${API_URL}/api/ai/chat`, {
+      const response = await axios.post(`${API_URL}/api/ai/chat`, {
         message: message,
         patient_data: safePatientData,
         history: history.map(msg => ({ 
@@ -92,188 +40,95 @@ class aiService {
         language: language
       });
 
-      if (backendResponse.data && backendResponse.data.success) {
+      if (response.data && response.data.success) {
         return {
           success: true,
-          response: backendResponse.data.response,
-          agent_status: backendResponse.data.agent_status || "Diagnostic Engine: Neural Cloud (Backend)",
-          model: backendResponse.data.model || "Backend-AI"
+          response: response.data.response,
+          agent_status: response.data.agent_status || "Diagnostic Engine: Neural Grok (Backend)",
+          model: response.data.model || "xAI-Grok"
         };
       }
-    } catch (backendErr) {
-      console.warn("⚠️ Local Backend AI failed. Falling back to direct client-side SDK...", backendErr.message);
-      lastError = backendErr;
+      throw new Error(response.data.error || "Neural Link Failure");
+    } catch (err) {
+      console.error("❌ Backend AI routing failed:", err.message);
+      return {
+        success: false,
+        error: `AI Council Error: ${err.response?.data?.error || err.message}`,
+        agent_status: "SYSTEM ERROR: Neural Link Offline"
+      };
     }
-
-    // STEP 2: Attempt Direct Gemini Council using v1beta (supports all models)
-    if (this.genAI) {
-      for (const modelName of this.models) {
-        try {
-          // v1beta required for gemini-1.5-x and gemini-2.0-flash-lite
-          const model = this.genAI.getGenerativeModel(
-            { model: modelName },
-            { apiVersion: "v1beta" }
-          );
-          const chat = model.startChat({
-            history: history.map(msg => ({
-              role: msg.role === 'user' ? 'user' : 'model',
-              parts: [{ text: msg.content }]
-            })).filter((_, i) => i > 0 || history[0]?.role === 'user'),
-            generationConfig: { maxOutputTokens: 2000, temperature: 0.2 },
-          });
-          const result = await chat.sendMessage(finalInput);
-          const response = await result.response;
-          return {
-            success: true,
-            response: response.text(),
-            agent_status: `Diagnostic Engine: ${modelName} (Direct-Client)`,
-            model: modelName
-          };
-        } catch (err) {
-          lastError = err;
-          console.warn(`⚠️ Gemini ${modelName} failed. Trying next...`, err.message);
-          // Always continue to next model on any error
-          continue;
-        }
-      }
-    }
-
-    // STEP 3: Emergency Fallback to OpenAI (GPT-4o)
-    if (OPENAI_API_KEY) {
-      console.log("🚑 EMERGENCY FAILOVER: Deploying OpenAI (GPT-4o) Council...");
-      try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              { role: "system", content: fullSystemPrompt },
-              ...history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content })),
-              { role: "user", content: finalInput }
-            ],
-            temperature: 0.2
-          })
-        });
-        const data = await response.json();
-        if (data.choices && data.choices[0]) {
-          return {
-            success: true,
-            response: data.choices[0].message.content,
-            agent_status: "Diagnostic Engine: OpenAI GPT-4o (Emergency Fallback)",
-            model: "gpt-4o"
-          };
-        }
-      } catch (openErr) {
-        console.error("OpenAI Fallback Error:", openErr);
-        lastError = openErr;
-      }
-    }
-
-    throw new Error(`AI Council Fully Busy or Keys Compromised. (Details: ${lastError?.message || lastError})`);
   }
 
   /**
-   * Specialized Diagnostic Methods (Using the Hybrid Engine)
+   * Vision Analysis: Routes medical reports to the Grok-Vision backend
    */
   async analyzeReport(file, fileType, language = "en") {
-    const langName = languageMap[language] || "English";
-    const prompt = `Perform an authoritative clinical analysis of this medical report. Extract vitals, findings, and diagnosis. 
-CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accurate medical terminology.`;
-    
-    let lastError = null;
-
-    // STEP 1: Attempt Cloud Backend Vision (Preferred)
-    console.log(`📡 ROUTING: Vision Analysis via Cloud Backend (${API_URL})...`);
+    console.log(`📡 ROUTING: Vision Analysis via Grok Cloud...`);
     try {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("language", language);
         
-        const backendResponse = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
+        const response = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 90000 // Increased to 90s for complex vision processing + key rotation
+            timeout: 120000 // 2 minutes for deep vision synthesis
         });
         
-        if (backendResponse.data && backendResponse.data.success) {
+        if (response.data && response.data.success) {
             return {
                 success: true,
-                analysis: backendResponse.data.analysis,
-                model: backendResponse.data.model || "Backend-Vision",
-                agent_status: backendResponse.data.agent_status || "Diagnostic Engine: Neural Cloud Vision"
+                analysis: response.data.analysis,
+                model: response.data.model || "Grok-Vision",
+                agent_status: response.data.agent_status || "Vision Specialist: Neural Grok"
             };
         }
-    } catch (backendErr) {
-        console.warn("⚠️ Backend Vision failed. Attempting direct client SDK...", backendErr.message);
-        lastError = backendErr;
+        throw new Error(response.data.error || "Vision Analysis Failed");
+    } catch (err) {
+        console.error("❌ Vision routing failed:", err.message);
+        return {
+            success: false,
+            error: `Vision Error: ${err.response?.data?.error || err.message}`,
+            agent_status: "SYSTEM ERROR: Vision Engine Offline"
+        };
     }
-
-    // STEP 2: Attempt Direct Gemini SDK (Client-side)
-    if (this.genAI) {
-      for (const modelName of this.models) {
-        try {
-          const model = this.genAI.getGenerativeModel(
-            { model: modelName },
-            { apiVersion: "v1beta" }
-          );
-          
-          const base64Data = await this.fileToGenerativePart(file);
-          const result = await model.generateContent([prompt, base64Data]);
-          const response = await result.response;
-  
-          return {
-            success: true,
-            analysis: response.text(),
-            model: modelName,
-            agent_status: `Vision Analyst: ${modelName} (Direct-Client)`
-          };
-        } catch (err) {
-          lastError = err;
-          // Only log if not a quota error to keep console clean
-          if (!err.message?.includes("429")) {
-            console.warn(`Vision model ${modelName} hit error:`, err.message);
-          }
-          continue;
-        }
-      }
-    }
-    
-    // STEP 3: Fallback to Text-only Proxy
-    console.error("All Vision paths failed. Falling back to text-only synthesis.");
-    return this.chatWithAI(prompt, { type: "Medical Report", status: "Image processing unavailable - Text Proxy Used", language: langName }, [], language);
   }
 
   async generateTreatmentPlan(data, lang = "en") {
-    const langName = languageMap[lang] || "English";
-    return this.chatWithAI(`Create a rigid 7-day clinical protocol. It MUST be written entirely in ${langName}.`, data, [], lang);
+    return this.chatWithAI("Generate a persistent treatment plan.", data, [], lang);
   }
 
   async analyzeASHACase(data, symptoms, lang = "en") {
-    return this.chatWithAI(`Triage these symptoms: ${JSON.stringify(symptoms)}`, data, [], lang);
+    return this.chatWithAI(`Triage Symptoms: ${JSON.stringify(symptoms)}`, data, [], lang);
   }
 
   async explainRisk(disease, risk, data, lang = "en") {
-    return this.chatWithAI(`Explain the ${Math.round(risk * 100)}% risk of ${disease}.`, data, [], lang);
+    return this.chatWithAI(`Explain ${Math.round(risk * 100)}% risk of ${disease}.`, data, [], lang);
   }
 
   async getCollaborativeConsensus(data, lang = "en") {
-    const res = await this.chatWithAI("Generate a Joint Council Consensus in JSON format.", data, [], lang);
+    // This now hits the Backend endpoint which uses Grok for consensus
     try {
-      const jsonStr = res.response.replace(/```json|```/g, "").trim();
-      return { success: true, ...JSON.parse(jsonStr) };
-    } catch (e) {
-      return { success: true, risk_level: "MODERATE", consensus_summary: res.response };
+        const response = await axios.post(`${API_URL}/api/ai/consensus`, {
+            patient_data: data,
+            symptoms: data.symptoms || {},
+            predictions: data.predictions || {},
+            language: lang
+        });
+        
+        if (response.data && response.data.success) {
+            return {
+                success: true,
+                ...response.data
+            };
+        }
+        throw new Error(response.data.error || "Consensus Failed");
+    } catch (err) {
+        return {
+            success: false,
+            error: err.message,
+            consensus_summary: "Consensus Engine Offline"
+        };
     }
-  }
-
-  async fileToGenerativePart(file) {
-    const base64 = await new Promise(resolve => {
-      const r = new FileReader(); r.onloadend = () => resolve(r.result.split(',')[1]); r.readAsDataURL(file);
-    });
-    return { inlineData: { data: base64, mimeType: file.type } };
   }
 }
 

@@ -51,9 +51,9 @@ init_db()
 
 
 app = FastAPI(
-    title="Agentic AI API - Gemini Powered",
-    description="Complete REST API with ML predictions + Google Gemini AI",
-    version="4.0.5 (Agentic AI Edition)",
+    title="Agentic AI OS - Grok Powered 🚀",
+    description="Advanced Diagnostic REST API with ML + xAI Grok Reasoning",
+    version="4.1.0 (Grok Stability Edition)",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -296,23 +296,21 @@ def make_all_predictions(patient_data: PatientData) -> Dict[str, float]:
 async def root():
     """Root endpoint - API information"""
     return {
-        "message": "Agentic AI API - Gemini Powered 🚀",
-        "version": "4.0.5",
-        "ai_provider": "Google Gemini",
+        "message": "Agentic AI OS - Grok Powered 🚀",
+        "version": "4.1.0",
+        "ai_provider": "xAI Grok",
         "model": settings.DEFAULT_MODEL,
-        "ai_configured": settings.has_gemini_key,
+        "ai_configured": settings.has_xai_key,
         "ml_models_loaded": len(models),
         "features": [
             "ML Disease Predictions (Diabetes, Heart, Kidney)",
-            "Collaborative Dual-AI Analysis (GPT-4o + Gemini)",
-            "Joint AI Treatment Plans",
-            "Consensus-Based Prediction Explanations",
-            "Dual-AI Health Q&A",
-            "Personalized Diet Recommendations",
-            "ASHA Mode",
+            "Grok Agentic Reasoning & Diagnostic Synthesis",
+            "Grok Vision Medical Report Analysis",
+            "3-Agent Specialist Consensus Panel",
+            "Regional Indian Language Support",
+            "ASHA Rural Health Mode",
         ],
-        "docs": "/docs",
-        "get_gemini_key": "https://makersuite.google.com/app/apikey"
+        "docs": "/docs"
     }
 
 @app.get("/health")
@@ -321,9 +319,8 @@ async def health_check():
     return {
         "status": "healthy",
         "ml_models_loaded": len(models),
-        "ml_models": list(models.keys()),
-        "ai_configured": settings.has_gemini_key,
-        "ai_model": settings.DEFAULT_MODEL if settings.has_gemini_key else "not_configured",
+        "ai_configured": settings.has_xai_key,
+        "ai_model": settings.DEFAULT_MODEL if settings.has_xai_key else "not_configured",
         "timestamp": datetime.now().isoformat()
     }
 
