@@ -15,10 +15,11 @@ class Settings:
     """Application settings and configuration"""
     
     # ========================================
-    # xAI GROK CONFIGURATION
+    # Groq CONFIGURATION
     # ========================================
-    XAI_API_KEY: str = os.getenv("XAI_API_KEY", "")
-    XAI_MODEL: str = os.getenv("XAI_MODEL", "grok-2")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    GROQ_VISION_MODEL: str = os.getenv("GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview")
     
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
@@ -26,7 +27,7 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./healthcare_ai.db")
     
     # Default model for common tasks
-    DEFAULT_MODEL: str = XAI_MODEL
+    DEFAULT_MODEL: str = GROQ_MODEL
     
     # ========================================
     # AI PARAMETERS
@@ -57,14 +58,17 @@ class Settings:
     # VALIDATION PROPERTIES
     # ========================================
     @property
-    def has_xai_key(self) -> bool:
-        """Check if xAI API key is configured"""
-        key = os.getenv("XAI_API_KEY", self.XAI_API_KEY)
-        has_key = bool(key and len(key) > 5)
-        # Log status (Safe)
+    def has_groq_key(self) -> bool:
+        """Check if Groq API key is configured"""
+        key = os.getenv("GROQ_API_KEY", self.GROQ_API_KEY)
+        has_key = bool(key and len(key) > 10)
         if __name__ != "__main__":
-             print(f"📡 CFG: XAI_API_KEY Detection Status: {'FOUND' if has_key else 'MISSING'}")
+             print(f"📡 CFG: GROQ_API_KEY Detection Status: {'FOUND' if has_key else 'MISSING'}")
         return has_key
+
+    @property
+    def has_xai_key(self) -> bool:
+        return self.has_groq_key # Redirect for compatibility
 
     @property
     def is_configured(self) -> bool:
@@ -90,15 +94,15 @@ settings = Settings()
 # Print configuration status on import
 if __name__ != "__main__":
     print("\n" + "="*60)
-    print("🚀 AGENTIC AI: Configuration Status (xAI Grok)")
+    print("🚀 AGENTIC AI: Configuration Status (Groq Llama Engine)")
     print("="*60)
     
-    if settings.has_xai_key:
-        print(f"OK: xAI Grok: Configured")
-        print(f"   Model: {settings.XAI_MODEL}")
-        print(f"   Status: Exclusive Diagnostic Engine Active")
+    if settings.has_groq_key:
+        print(f"OK: Groq Engine: Configured")
+        print(f"   Model: {settings.GROQ_MODEL}")
+        print(f"   Status: Ultra-Fast Inference Enabled")
     else:
-        print("ERROR: xAI Grok: Not configured")
-        print("   Add to backend/.env file: XAI_API_KEY=xai-...")
+        print("ERROR: Groq Engine: Not configured")
+        print("   Add to backend/.env file: GROQ_API_KEY=gsk-...")
     
-    print("="*60 + "\n")
+    print("="*60 + "\n")
