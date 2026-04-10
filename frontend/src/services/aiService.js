@@ -195,7 +195,7 @@ CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accur
         
         const backendResponse = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 60000 // Allow 1 minute for vision processing
+            timeout: 90000 // Increased to 90s for complex vision processing + key rotation
         });
         
         if (backendResponse.data && backendResponse.data.success) {

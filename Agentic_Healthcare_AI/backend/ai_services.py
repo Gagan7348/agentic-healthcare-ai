@@ -610,8 +610,8 @@ CRITICAL: If {language_name} is an Indian language like Hindi, Tamil, Bengali, e
                             response = current_vision_model.generate_content(
                                 content_parts,
                                 request_options={
-                                    "timeout": 120, 
-                                    "retry": retry.Retry(initial=1.0, multiplier=2.0, maximum=30.0, deadline=120.0)
+                                    "timeout": 45, 
+                                    # Disabled retry to force immediate key rotation on 429
                                 }
                             )
                             
