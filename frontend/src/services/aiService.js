@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../config";
 
-console.log("🚀 AGENTIC AI: Stability Patch V4 Active (Grok Exclusive - Backend Only)");
+console.log("🚀 AGENTIC AI: Stability Patch V6 Active (Ultra-Fast Groq Engine)");
 
 export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
@@ -10,15 +10,15 @@ export const languageMap = {
 };
 
 /**
- * Frontend AI Service: Enforces Backend-First Routing to the Grok API.
+ * Frontend AI Service: Enforces Backend-First Routing to the Groq API.
  * This prevents client-side 429 Errors and keeps API keys secure.
  */
 class aiService {
   /**
-   * Core Chat Engine: Routes directly to the Grok-powered Backend
+   * Core Chat Engine: Routes directly to the Groq-powered Backend
    */
   async chatWithAI(message, patientContext = null, history = [], language = "en") {
-    console.log(`📡 ROUTING: Clinical Consultation via Grok Cloud (${API_URL})...`);
+    console.log(`📡 ROUTING: Clinical Consultation via Groq Llama Engine (${API_URL})...`);
     
     let safePatientData = null;
     if (patientContext) {
@@ -44,8 +44,8 @@ class aiService {
         return {
           success: true,
           response: response.data.response,
-          agent_status: response.data.agent_status || "Diagnostic Engine: Neural Grok (Backend)",
-          model: response.data.model || "xAI-Grok"
+          agent_status: response.data.agent_status || "Diagnostic Engine: Groq Llama (Backend)",
+          model: response.data.model || "Groq-Llama-3.3"
         };
       }
       throw new Error(response.data.error || "Neural Link Failure");
@@ -60,10 +60,10 @@ class aiService {
   }
 
   /**
-   * Vision Analysis: Routes medical reports to the Grok-Vision backend
+   * Vision Analysis: Routes medical reports to the Groq-Vision backend
    */
   async analyzeReport(file, fileType, language = "en") {
-    console.log(`📡 ROUTING: Vision Analysis via Grok Cloud...`);
+    console.log(`📡 ROUTING: Vision Analysis via Groq Llama Vision...`);
     try {
         const formData = new FormData();
         formData.append("file", file);
@@ -78,8 +78,8 @@ class aiService {
             return {
                 success: true,
                 analysis: response.data.analysis,
-                model: response.data.model || "Grok-Vision",
-                agent_status: response.data.agent_status || "Vision Specialist: Neural Grok"
+                model: response.data.model || "Groq-Llama-Vision",
+                agent_status: response.data.agent_status || "Vision Specialist: Groq Llama"
             };
         }
         throw new Error(response.data.error || "Vision Analysis Failed");
@@ -106,7 +106,7 @@ class aiService {
   }
 
   async getCollaborativeConsensus(data, lang = "en") {
-    // This now hits the Backend endpoint which uses Grok for consensus
+    // This now hits the Backend endpoint which uses Groq for consensus
     try {
         const response = await axios.post(`${API_URL}/api/ai/consensus`, {
             patient_data: data,
