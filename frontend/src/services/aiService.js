@@ -217,8 +217,30 @@ CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accur
     
     // If all models hit quota or fail
     console.error("All Vision models failed:", lastError?.message || "Unknown error");
-    console.warn("Vision model exhausted, falling back to text analysis proxy (no vision)");
-    return this.chatWithAI(prompt, { type: "Medical Report", language: langName }, [], language);
+    console.warn("Vision model exhausted on client. Routing to Cloud Backend Vision Proxy...");
+    
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("language", language);
+        
+        const backendResponse = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        if (backendResponse.data && backendResponse.data.success) {
+            return {
+                success: true,
+                analysis: backendResponse.data.analysis,
+                model: backendResponse.data.model || "Backend-Vision",
+                agent_status: backendResponse.data.agent_status || "Diagnostic Engine: Neural Cloud Vision"
+            };
+        }
+    } catch (backendErr) {
+        console.error("Backend Vision Proxy also failed:", backendErr);
+    }
+
+    return this.chatWithAI(prompt, { type: "Medical Report", status: "Image processing unavailable - Text Proxy Used", language: langName }, [], language);
   }
 
   async generateTreatmentPlan(data, lang = "en") {
