@@ -184,48 +184,16 @@ CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accur
     
     let lastError = null;
 
-    if (!this.genAI) {
-        console.warn("Gemini Key Missing for Vision - falling back to text analysis proxy (no vision)");
-        return this.chatWithAI(prompt, { type: "Medical Report", language: langName }, [], language);
-    }
-    
-    // Attempt vision models with fallback chain to handle Quota (429) cleanly
-    for (const modelName of this.models) {
-       try {
-           const model = this.genAI.getGenerativeModel(
-             { model: modelName },
-             { apiVersion: "v1beta" }
-           );
-           
-           // Convert Blob/File to base64 for direct transfer
-           const base64Data = await this.fileToGenerativePart(file);
-           const result = await model.generateContent([prompt, base64Data]);
-           const response = await result.response;
-   
-           return {
-               success: true,
-               analysis: response.text(),
-               model: modelName,
-               agent_status: `Vision Analyst: ${modelName} (v1beta)`
-           };
-       } catch (err) {
-           lastError = err;
-           console.warn(`Vision model ${modelName} failed, trying next...`, err.message);
-           continue; // Attempt the next model in the fallback array
-       }
-    }
-    
-    // If all models hit quota or fail
-    console.error("All Vision models failed:", lastError?.message || "Unknown error");
-    console.warn("Vision model exhausted on client. Routing to Cloud Backend Vision Proxy...");
-    
+    // STEP 1: Attempt Cloud Backend Vision (Preferred)
+    console.log("📡 ROUTING: Vision Analysis via Cloud Backend...");
     try {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("language", language);
         
         const backendResponse = await axios.post(`${API_URL}/api/ai/analyze-report`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 60000 // Allow 1 minute for vision processing
         });
         
         if (backendResponse.data && backendResponse.data.success) {
@@ -237,9 +205,42 @@ CRITICAL: You MUST respond ENTIRELY in ${langName}. Use native scripts and accur
             };
         }
     } catch (backendErr) {
-        console.error("Backend Vision Proxy also failed:", backendErr);
+        console.warn("⚠️ Backend Vision failed. Attempting direct client SDK...", backendErr.message);
+        lastError = backendErr;
     }
 
+    // STEP 2: Attempt Direct Gemini SDK (Client-side)
+    if (this.genAI) {
+      for (const modelName of this.models) {
+        try {
+          const model = this.genAI.getGenerativeModel(
+            { model: modelName },
+            { apiVersion: "v1beta" }
+          );
+          
+          const base64Data = await this.fileToGenerativePart(file);
+          const result = await model.generateContent([prompt, base64Data]);
+          const response = await result.response;
+  
+          return {
+            success: true,
+            analysis: response.text(),
+            model: modelName,
+            agent_status: `Vision Analyst: ${modelName} (Direct-Client)`
+          };
+        } catch (err) {
+          lastError = err;
+          // Only log if not a quota error to keep console clean
+          if (!err.message?.includes("429")) {
+            console.warn(`Vision model ${modelName} hit error:`, err.message);
+          }
+          continue;
+        }
+      }
+    }
+    
+    // STEP 3: Fallback to Text-only Proxy
+    console.error("All Vision paths failed. Falling back to text-only synthesis.");
     return this.chatWithAI(prompt, { type: "Medical Report", status: "Image processing unavailable - Text Proxy Used", language: langName }, [], language);
   }
 
