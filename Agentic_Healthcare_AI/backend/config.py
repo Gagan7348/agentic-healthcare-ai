@@ -24,6 +24,7 @@ class Settings:
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
     PHIDATA_API_KEY: str = os.getenv("PHIDATA_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./healthcare_ai.db")
     
     # Default model for common tasks
@@ -69,6 +70,12 @@ class Settings:
     @property
     def has_xai_key(self) -> bool:
         return self.has_groq_key # Redirect for compatibility
+
+    @property
+    def has_gemini_key(self) -> bool:
+        """Check if Gemini API key is configured"""
+        key = os.getenv("GEMINI_API_KEY", self.GEMINI_API_KEY)
+        return bool(key and len(key) > 10)
 
     @property
     def is_configured(self) -> bool:
