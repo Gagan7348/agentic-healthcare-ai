@@ -67,7 +67,7 @@ export default function CollaborativeAI() {
           Joint AI Council <span className="text-indigo-500">Consensus</span>
         </h1>
         <p className="text-[var(--text-secondary)] font-medium max-w-2xl mx-auto opacity-70">
-          Simultaneous synthesis of specialized clinical reasoning via the <span className="text-blue-500">xAI Grok Diagnostic Engine</span> for unified patient alignment.
+          Simultaneous synthesis of specialized clinical reasoning via the <span className="text-blue-500">Groq Llama Diagnostic Engine</span> for unified patient alignment.
         </p>
       </div>
 

@@ -63,7 +63,7 @@ class Settings:
         key = os.getenv("GROQ_API_KEY", self.GROQ_API_KEY)
         has_key = bool(key and len(key) > 10)
         if __name__ != "__main__":
-             print(f"📡 CFG: GROQ_API_KEY Detection Status: {'FOUND' if has_key else 'MISSING'}")
+             print(f"CFG: GROQ_API_KEY Detection Status: {'FOUND' if has_key else 'MISSING'}")
         return has_key
 
     @property
@@ -94,7 +94,7 @@ settings = Settings()
 # Print configuration status on import
 if __name__ != "__main__":
     print("\n" + "="*60)
-    print("🚀 AGENTIC AI: Configuration Status (Groq Llama Engine)")
+    print("AGENTIC AI: Configuration Status (Groq Llama Engine)")
     print("="*60)
     
     if settings.has_groq_key:

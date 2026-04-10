@@ -75,7 +75,7 @@ class GroqClient:
                     "usage": data.get("usage", {})
                 }
         except Exception as e:
-            print(f"❌ Groq API Direct Error: {str(e)}")
+            print(f"FAILED: Groq API Direct Error: {str(e)}")
             return {"success": False, "error": f"Groq API Direct Error: {str(e)}"}
 
     @staticmethod
@@ -133,7 +133,7 @@ class GroqClient:
                     "model": settings.GROQ_VISION_MODEL
                 }
         except Exception as e:
-            print(f"❌ Groq Vision Direct Error: {str(e)}")
+            print(f"FAILED: Groq Vision Direct Error: {str(e)}")
             return {"success": False, "error": f"Groq Vision Error: {str(e)}"}
 
 class HealthcareAI:
@@ -294,3 +294,8 @@ def voice_summary(patient_data: Dict, symptoms: Dict, urgency: str, language: st
     import asyncio
     prompt = f"Provide a brief 2-sentence clinical summary. Urgency: {urgency}."
     return asyncio.run(HealthcareAI.chat_with_gemini(prompt, patient_data, language=language))
+
+async def dual_consensus_review(patient_data: Dict, ml_predictions: Dict, gpt_analysis: str, language: str = "en") -> Dict:
+    """Consensus Review using Groq Llama-3.3-70B"""
+    prompt = f"Synthesize a final consensus report based on ML risks and previous consultant draft: {gpt_analysis}"
+    return await HealthcareAI.chat_with_gemini(prompt, patient_data, language=language)

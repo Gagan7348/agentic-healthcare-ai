@@ -77,7 +77,7 @@ function ReportAnalysis({ language = 'en', selectedPatient = null, onNavigate = 
     } catch (err) {
       console.error('Analysis error:', err)
       const errorText = err.message.includes('quota') || err.message.includes('limit')
-        ? (language === 'hi' ? 'Grok AI का कोटा समाप्त हो गया है।' : 'Neural Quota Exceeded.')
+        ? (language === 'hi' ? 'Groq AI का कोटा समाप्त हो गया है।' : 'Neural Quota Exceeded.')
         : (language === 'hi' ? 'रिपोर्ट विश्लेषण विफल रहा' : 'Report Analysis Failed')
       
       setError(errorText)
