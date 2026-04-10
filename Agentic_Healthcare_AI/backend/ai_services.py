@@ -3,6 +3,8 @@ from typing import Optional, Dict, List, Any
 import json
 import httpx
 import base64
+import io
+from PIL import Image
 from datetime import datetime
 from .config import settings
 
@@ -147,6 +149,36 @@ class HealthcareAI:
     """Refactored Healthcare AI Service: Exclusive Direct Groq Llama Integration"""
 
     @staticmethod
+    def process_image_for_vision(image_bytes: bytes, max_size: int = 1024) -> bytes:
+        """
+        Optimize image for Groq Vision:
+        1. Resize high-res images (maintain aspect ratio)
+        2. Convert to JPEG
+        3. Compress for lean base64 payload
+        """
+        try:
+            img = Image.open(io.BytesIO(image_bytes))
+            
+            # Convert RGBA to RGB if necessary (JPEG doesn't support transparency)
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+            
+            # Resize if too large
+            if max(img.size) > max_size:
+                img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+            # Save to bytes
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=85, optimize=True)
+            optimized_bytes = buffer.getvalue()
+            
+            print(f"📡 AI: Image Optimized: {len(image_bytes)//1024}KB -> {len(optimized_bytes)//1024}KB")
+            return optimized_bytes
+        except Exception as e:
+            print(f"⚠️ AI: Image Optimization Failed: {str(e)}. Using original.")
+            return image_bytes
+
+    @staticmethod
     async def chat_with_gemini(
         message: str,
         patient_context: Optional[Dict] = None,
@@ -257,9 +289,13 @@ class HealthcareAI:
 
     @staticmethod
     async def analyze_medical_report(file_content: bytes, file_type: str, language: str = "english") -> Dict:
-        """Direct Groq Llama-3.2-Vision Analysis"""
+        """Direct Groq Llama-3.2-90B-Vision Analysis (with compression)"""
+        
+        # Step 1: Optimize for vision payload
+        optimized_content = HealthcareAI.process_image_for_vision(file_content)
+        
         prompt = f"Perform a high-precision medical report analysis in {language}. Extract ALL biomarkers and provide clinical context."
-        result = await GroqClient.vision_analysis(prompt, file_content, file_type, language)
+        result = await GroqClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
         
         if result["success"]:
             return {
