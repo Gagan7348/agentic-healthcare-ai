@@ -59,7 +59,12 @@ class Settings:
     @property
     def has_xai_key(self) -> bool:
         """Check if xAI API key is configured"""
-        return bool(self.XAI_API_KEY and len(self.XAI_API_KEY) > 10)
+        key = os.getenv("XAI_API_KEY", self.XAI_API_KEY)
+        has_key = bool(key and len(key) > 5)
+        # Log status (Safe)
+        if __name__ != "__main__":
+             print(f"📡 CFG: XAI_API_KEY Detection Status: {'FOUND' if has_key else 'MISSING'}")
+        return has_key
 
     @property
     def is_configured(self) -> bool:

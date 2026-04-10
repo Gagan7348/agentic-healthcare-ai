@@ -23,8 +23,11 @@ from .config import settings
 # Initialize Grok Model (xAI)
 grok_agent = None
 
+print(f"📡 AI INIT: Phidata={PHIDATA_AVAILABLE}, XAI_KEY_SET={settings.has_xai_key}")
+
 if PHIDATA_AVAILABLE and settings.has_xai_key:
     try:
+        print(f"📡 AI INIT: Attempting Grok Agent Creation ({settings.XAI_MODEL})...")
         # Create a Medical Specialist Agent powered by Grok
         grok_agent = Agent(
             model=xAI(id=settings.XAI_MODEL, api_key=settings.XAI_API_KEY),
@@ -42,7 +45,12 @@ if PHIDATA_AVAILABLE and settings.has_xai_key:
         )
         print(f"🚀 AGENTIC COUNCIL: xAI Grok ({settings.XAI_MODEL}) Active")
     except Exception as e:
-        print(f"CRITICAL ERROR: Grok Initialization Failed: {e}")
+        print(f"❌ CRITICAL ERROR: Grok Initialization Failed: {e}")
+else:
+    if not PHIDATA_AVAILABLE:
+        print("❌ AI INIT ERROR: phidata package not available in this environment.")
+    if not settings.has_xai_key:
+        print("❌ AI INIT ERROR: XAI_API_KEY is missing or too short in environment variables.")
 
 
 class HealthcareAI:
