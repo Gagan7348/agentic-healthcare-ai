@@ -293,13 +293,18 @@ class HealthcareAI:
         Target Language: {language}
 
         REQUIRED SECTIONS (In {language} script):
-        1. **PATIENT METRICS**: Extract name, age, and ID if present.
-        2. **DETAILED BIOMARKER EXTRACTION**: Identify ALL anatomical findings and numerical values.
-        3. **CLINICAL PHYSIOLOGY**: Explain the physiological meaning of each finding. For example, if a disc bulge is found, explain the impact on nerve roots.
-        4. **SPECIALIST IMPRESSION**: A deep-dive clinical assessment.
-        5. **PREVENTIVE ROADMAP**: Step-by-step actions for the patient.
+        1. **PATIENT METRICS**: Extract name, age, and ID if present in extreme detail.
+        2. **DETAILED BIOMARKER EXTRACTION**: Identify absolutely ALL anatomical findings, dimensions, and numerical values. Do not miss any detail.
+        3. **CLINICAL PHYSIOLOGY (LAYMAN ANALOGIES)**: Explain the physiological meaning of EVERY SINGLE finding. You MUST explain complex medical terms using VERY SIMPLE, everyday analogies (e.g., 'like a water pipe getting clogged' or 'like a pillow losing its cushioning'). Make it understandable for someone with zero medical background.
+        4. **SPECIALIST IMPRESSION**: A deep-dive clinical assessment and exact diagnosis.
+        5. **PREVENTIVE ROADMAP**: Step-by-step actions, dietary advice, and lifestyle changes for the patient.
+        6. **AGENTIC AI IMPACT**: Explain exactly how this analysis connects to the 'Agentic Healthcare AI System'. Mention how this AI analysis prevents diagnostic errors in rural areas, assists ASHA workers in triaging this specific condition, and enables multi-agent clinical consensus.
 
-        CRITICAL: Provide AT LEAST 500 words of clinical detail. Be exhaustive. No English letters in native script outputs."""
+        CRITICAL INSTRUCTIONS: 
+        - Provide AT LEAST 800 - 1000 words of extreme clinical detail. 
+        - Be highly descriptive. 
+        - DO NOT cut sentences short. 
+        - No English letters in native script outputs."""
         
         result = await GroqClient.vision_analysis(prompt, optimized_content, "image/jpeg", language)
         
