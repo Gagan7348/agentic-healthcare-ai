@@ -563,16 +563,16 @@ async def ai_status_endpoint():
     """
     return {
         "success": True,
-        "ai_provider": "Google Gemini",
-        "gemini_configured": settings.has_gemini_key,
-        "model": settings.DEFAULT_MODEL,
+        "ai_provider": "Groq Llama Engine",
+        "groq_configured": settings.has_groq_key,
+        "model": settings.GROQ_MODEL,
         "max_tokens": settings.MAX_TOKENS,
         "temperature": settings.TEMPERATURE,
         "pricing": {
-            "gemini-1.5-flash": "FREE tier (15 RPM) or $0.000075/1K chars",
-            "gemini-1.5-pro": "$0.00125/1K chars"
+            "llama-3.3-70b": "Ultra-Fast Inference",
+            "llama-3.2-vision": "Deep Vision Synthesis"
         },
-        "get_key_at": "https://makersuite.google.com/app/apikey"
+        "get_key_at": "https://console.groq.com/keys"
     }
 
 # ============================================================================
@@ -628,7 +628,7 @@ async def asha_analyze(patient: PatientData, symptoms: SymptomData):
         
         # Get AI analysis for additional insights (Voice optimized)
         ai_analysis = None
-        if settings.has_gemini_key:
+        if settings.has_groq_key:
             try:
                 ai_result = voice_summary(patient.dict(), symptoms.dict(), urgency_text, language=patient.language)
                 if ai_result.get("success"):
