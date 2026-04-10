@@ -1,14 +1,9 @@
 import os
 
-# Fix gRPC IPv6 timeout issues for google-generativeai
-# MUST BE BEFORE ANY OTHER IMPORTS
-os.environ["GRPC_ENABLE_IPV6"] = "0"
-os.environ["GRPC_DNS_RESOLVER"] = "native"
-
 """
 Healthcare AI System - Complete Backend
-Google Gemini AI Powered
-FastAPI REST API with ML + AI
+xAI Grok Powered
+FastAPI REST API with ML + AI Reasoning
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -42,7 +37,6 @@ from .external_apis import (
     search_icd10,
     get_medlineplus_info, get_who_stats, WHO_INDICATORS
 )
-from .openai_service import get_second_opinion, get_drug_safety_opinion
 from typing import Any
 from fastapi import Depends
 

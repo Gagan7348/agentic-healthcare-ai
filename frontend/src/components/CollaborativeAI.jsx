@@ -67,7 +67,7 @@ export default function CollaborativeAI() {
           Joint AI Council <span className="text-indigo-500">Consensus</span>
         </h1>
         <p className="text-[var(--text-secondary)] font-medium max-w-2xl mx-auto opacity-70">
-          Simultaneous synthesis of <span className="text-indigo-500">GPT-4o Expert Opinion</span> and <span className="text-blue-500">Gemini Clinical Reasoning</span> for unified patient alignment.
+          Simultaneous synthesis of specialized clinical reasoning via the <span className="text-blue-500">xAI Grok Diagnostic Engine</span> for unified patient alignment.
         </p>
       </div>
 
@@ -193,7 +193,7 @@ export default function CollaborativeAI() {
                       <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                          <span className="text-white font-black text-sm">G4</span>
                       </div>
-                      <h4 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">GPT-4o Specialist Insight</h4>
+                      <h4 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Grok Reasoning Specialist</h4>
                    </div>
                    <div className="bg-indigo-500/10 text-indigo-500 px-2 py-1 rounded-md text-[10px] font-black uppercase">Clinically Verified</div>
                 </div>
@@ -217,7 +217,7 @@ export default function CollaborativeAI() {
                       <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                          <span className="text-white font-black text-sm">G1</span>
                       </div>
-                      <h4 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Gemini 1.5 Clinical Analyst</h4>
+                      <h4 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Grok Clinical Analyst</h4>
                    </div>
                    <div className="bg-blue-500/10 text-blue-500 px-2 py-1 rounded-md text-[10px] font-black uppercase">ML Synergy Active</div>
                 </div>

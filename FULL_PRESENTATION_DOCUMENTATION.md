@@ -64,12 +64,12 @@ India's healthcare crisis is driven by severe structural imbalances:
 # 📋 SLIDE 4: OBJECTIVES OF STUDY
 
 
-- **O1**: Multi-Agent AI Clinical OS | Gemini + GPT-4o + Groq working as a 3-doctor consensus panel
+- **O1**: Multi-Agent AI Clinical OS | Powered by **xAI Grok** — Exclusive high-performance reasoning engine
 - **O2**: ML Disease Risk Prediction | XGBoost models for Diabetes, Heart Disease & CKD — >91% accuracy
-- **O3**: Persistent Clinical Database | MongoDB Atlas: 10,000+ patients, auto-partitioned by clinical risk
-- **O4**: 10-Language Healthcare Access | Native script AI output in Hindi, Tamil, Telugu + 7 more languages
+- **O3**: Persistent Clinical Database | MongoDB Atlas: 10,000+ patients
+- **O4**: 10-Language Healthcare Access | Native script AI output powered by Grok's advanced linguistics
 - **O5**: ASHA Worker Triage Tool | RED/YELLOW/GREEN urgency system aligned to NHM PHC guidelines
-- **O6**: Production Deployment | FastAPI on Render + React on Netlify — globally live, 99.7% uptime
+- **O6**: Production Deployment | FastAPI on Render + React on Netlify — Stabilized via Backend Routing
 
 ---
 

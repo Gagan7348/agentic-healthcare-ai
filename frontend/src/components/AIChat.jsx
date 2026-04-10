@@ -9,7 +9,7 @@ function AIChat({ language = 'en', selectedPatient = null, chatContext = null, c
   const [messages, setMessages] = useState([
     { 
       role: 'assistant', 
-      content: language === 'hi' ? 'नमस्ते! हम आपके एआई स्वास्थ्य परिषद (Gemini + GPT-4o) हैं। हम आपकी कैसे मदद कर सकते हैं?' : "Hello! We are your AI Health Council (Gemini + GPT-4o). We have synthesized your clinical profile for a unified assessment. How can we help you today?" 
+      content: language === 'hi' ? 'नमस्ते! हम आपके एआई स्वास्थ्य परिषद (xAI Grok) हैं। हम आपकी कैसे मदद कर सकते हैं?' : "Hello! I am your AI Health Specialist powered by xAI Grok. I have reviewed your clinical profile. How can we help you today?" 
     }
   ])
   const [input, setInput] = useState('')
