@@ -343,7 +343,7 @@ class HealthcareAI:
         ML Predictions: {json.dumps(predictions, indent=1)}
         Context: {additional_context or "General synthesis."}
         
-        Provide a detailed clinical overview in {language}."""
+        Provide a detailed clinical overview. You MUST respond 100% in {language}."""
         
         return await HealthcareAI.chat_with_gemini(prompt, patient_data, language=language)
 
@@ -355,7 +355,7 @@ class HealthcareAI:
             
             async def get_specialist_view(role_name: str, role_task: str):
                 messages = [
-                    {"role": "system", "content": f"You are {role_name}. {role_task}"},
+                    {"role": "system", "content": f"You are {role_name}. {role_task} Respond 100% in {language}."},
                     {"role": "user", "content": f"Assess this case: {context}"}
                 ]
                 
@@ -373,7 +373,7 @@ class HealthcareAI:
             
             # Final Synthesis
             final_msgs = [
-                {"role": "system", "content": "You are the Chief Clinical Synthesizer. Merge these three specialist inputs into a final 3-sentence clinical directive."},
+                {"role": "system", "content": f"You are the Chief Clinical Synthesizer. Merge these three specialist inputs into a final 3-sentence clinical directive. Respond 100% in {language}."},
                 {"role": "user", "content": f"Specialist Inputs: {cortex}, {vitalis}, {synapse}. Case Context: {context}"}
             ]
             
@@ -404,6 +404,28 @@ class HealthcareAI:
         # Step 1: Optimize for vision payload
         optimized_content = HealthcareAI.process_image_for_vision(file_content)
         
+        # Language-specific header mapping
+        headers = {
+            "english": {
+                "header": "SYSTEM HEADER",
+                "title": "PERSONALIZED CLINICAL SYNTHESIS FOR",
+                "markers": "1. DEEP BIOMARKER IDENTIFICATION",
+                "analogy": "2. 'MEDICAL-TO-HUMAN' ANALOGIES",
+                "roadmap": "3. ACTIONABLE CLINICAL ROADMAP (STEP-BY-STEP)",
+                "risk": "4. RISK MATRIX & PREVENTIVE SCORES"
+            },
+            "hindi": {
+                "header": "सिस्टम हेडर",
+                "title": "व्यक्तिगत नैदानिक विश्लेषण: ",
+                "markers": "1. विस्तृत बायोमार्कर पहचान (DEEP BIOMARKER IDENTIFICATION)",
+                "analogy": "2. 'मेडिकल-से-मानव' सरल व्याख्या (MEDICAL-TO-HUMAN ANALOGIES)",
+                "roadmap": "3. कार्ययोजना और स्वास्थ्य रोडमैप (ACTIONABLE CLINICAL ROADMAP)",
+                "risk": "4. जोखिम मैट्रिक्स और निवारक स्कोर (RISK MATRIX & PREVENTIVE SCORES)"
+            }
+        }
+        
+        h = headers.get(language.lower(), headers["english"])
+
         prompt = f"""Conduct an EXHAUSTIVE, RESEARCH-GRADE Clinical Diagnostic Synthesis of this medical report.
         
 **Brand Identity:**
@@ -415,24 +437,24 @@ class HealthcareAI:
 
 ### **[MANDATORY OUTPUT STRUCTURE]**
 
-#### **SYSTEM HEADER**
-**PERSONALIZED CLINICAL SYNTHESIS FOR: [PATIENT NAME]**
+#### **{h['header']}**
+**{h['title']} [PATIENT NAME]**
 **REANALYZED BY: AGENTIC AI**
 
-#### **1. DEEP BIOMARKER IDENTIFICATION**
-*Identify and explain every measurement and signal intensity found in the report.*
+#### **{h['markers']}**
+*Identify and explain every measurement and signal intensity found in the report. Use highly detailed clinical language.*
 
-#### **2. "MEDICAL-TO-HUMAN" ANALOGIES**
-*Convert jargon into simple day-to-day life analogies.*
+#### **{h['analogy']}**
+*Convert jargon into simple day-to-day life analogies. Connect findings to the patient's daily life.*
 
-#### **3. ACTIONABLE CLINICAL ROADMAP (STEP-BY-STEP)**
-*Precise instructions for the next 30 days.*
+#### **{h['roadmap']}**
+*Precise instructions for the next 30 days. Break down into 10-day phases.*
 
-#### **4. RISK MATRIX & PREVENTIVE SCORES**
-[Low / Moderate / High]
+#### **{h['risk']}**
+[Low / Moderate / High] - Provide a score out of 10.
 
 ---
-Language Protocol: Respond 100% in {language}. Provide at least 800+ words of detail.
+CRITICAL: You MUST respond 100% in {language}. Do NOT use English for any explanations. Provide at least 800+ words of depth.
 """
         
         # Primary Routing: Attempt Gemini first, fallback to Groq
@@ -486,10 +508,10 @@ async def diet(patient_data: Dict, predictions: Dict, language: str = "en") -> D
 
 def voice_summary(patient_data: Dict, symptoms: Dict, urgency: str, language: str = "en") -> Dict:
     import asyncio
-    prompt = f"Provide a brief 2-sentence clinical summary. Urgency: {urgency}."
+    prompt = f"Provide a brief 2-sentence clinical summary. Urgency: {urgency}. You MUST respond 100% in {language}."
     return asyncio.run(HealthcareAI.chat_with_gemini(prompt, patient_data, language=language))
 
 async def dual_consensus_review(patient_data: Dict, ml_predictions: Dict, gpt_analysis: str, language: str = "en") -> Dict:
     """Consensus Review using Groq Llama-3.3-70B"""
-    prompt = f"Synthesize a final consensus report based on ML risks and previous consultant draft: {gpt_analysis}"
+    prompt = f"Synthesize a final consensus report based on ML risks and previous consultant draft: {gpt_analysis}. You MUST respond 100% in {language}."
     return await HealthcareAI.chat_with_gemini(prompt, patient_data, language=language)
