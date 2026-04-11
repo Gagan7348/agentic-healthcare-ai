@@ -350,6 +350,9 @@ class HealthcareAI:
     @staticmethod
     async def generate_agentic_consensus(patient_data: Dict, symptoms: Dict, predictions: Dict, language: str = "english") -> Dict:
         """Simulate a consensus panel using direct Groq calls with specialist roles"""
+        # Normalize language
+        target_lang = "Hindi" if language.lower() in ["hi", "hindi"] else "English"
+        
         try:
             context = f"Patient: {json.dumps(patient_data)}. Symptoms: {json.dumps(symptoms)}. Risks: {json.dumps(predictions)}."
             
@@ -404,7 +407,13 @@ class HealthcareAI:
         # Step 1: Optimize for vision payload
         optimized_content = HealthcareAI.process_image_for_vision(file_content)
         
-        # Language-specific header mapping
+        # Language-specific header mapping with code normalization
+        lang_input = language.lower()
+        if "hindi" in lang_input or "hi" in lang_input or "हिंदी" in lang_input:
+            lang_key = "hindi"
+        else:
+            lang_key = "english"
+
         headers = {
             "english": {
                 "header": "SYSTEM HEADER",
@@ -424,7 +433,7 @@ class HealthcareAI:
             }
         }
         
-        h = headers.get(language.lower(), headers["english"])
+        h = headers.get(lang_key, headers["english"])
 
         prompt = f"""Conduct an EXHAUSTIVE, RESEARCH-GRADE Clinical Diagnostic Synthesis of this medical report.
         
