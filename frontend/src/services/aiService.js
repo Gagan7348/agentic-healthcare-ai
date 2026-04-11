@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../config";
 
-console.log("🚀 AGENTIC AI: Stability Patch V11 Active (API DEBUG MODE)");
+console.log("🚀 AGENTIC AI: Stability Patch V13 Active (AGENTIC OS UI - HIGH VISIBILITY DARK MODE)");
 console.log("API CALLED");
 
 export const languageMap = {
