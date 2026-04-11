@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../config";
 
-console.log("🚀 AGENTIC AI: Stability Patch V9 Active (FINAL CONNECTIVITY BRIDGE - GEMINI FIRST)");
+console.log("🚀 AGENTIC AI: Stability Patch V10 Active (VERIFIED PRODUCTION SYNC - PERSONALIZATION ENABLED)");
 
 export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
