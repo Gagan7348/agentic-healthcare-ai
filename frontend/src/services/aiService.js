@@ -1,7 +1,8 @@
 import axios from "axios";
 import { API_URL } from "../config";
 
-console.log("🚀 AGENTIC AI: Stability Patch V10 Active (VERIFIED PRODUCTION SYNC - PERSONALIZATION ENABLED)");
+console.log("🚀 AGENTIC AI: Stability Patch V11 Active (API DEBUG MODE)");
+console.log("API CALLED");
 
 export const languageMap = {
   "en": "English", "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
@@ -18,6 +19,7 @@ class aiService {
    * Core Chat Engine: Routes directly to the Groq-powered Backend
    */
   async chatWithAI(message, patientContext = null, history = [], language = "en") {
+    console.log("API CALLED: chatWithAI");
     console.log(`📡 ROUTING: Clinical Consultation via Gemini/Groq AI Engine (${API_URL})...`);
     
     let safePatientData = null;
@@ -63,6 +65,7 @@ class aiService {
    * Vision Analysis: Routes medical reports to the Groq-Vision backend
    */
   async analyzeReport(file, fileType, language = "en") {
+    console.log("API CALLED: analyzeReport");
     console.log(`📡 ROUTING: Vision Analysis via Gemini/Groq Vision Engine...`);
     try {
         const formData = new FormData();

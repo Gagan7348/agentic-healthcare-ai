@@ -212,7 +212,7 @@ class GeminiClient:
         try:
             async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(
-                    f"{GeminiClient.BASE_URL}/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
+                    f"{GeminiClient.BASE_URL}/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
                     json=payload
                 )
                 
@@ -221,7 +221,7 @@ class GeminiClient:
                 
                 data = response.json()
                 text = data["candidates"][0]["content"]["parts"][0].get("text", "")
-                return {"success": True, "content": text, "model": "gemini-2.5-flash"}
+                return {"success": True, "content": text, "model": "gemini-1.5-flash"}
         except Exception as e:
             return {"success": False, "error": f"Gemini Direct Error: {str(e)}"}
 
@@ -246,7 +246,7 @@ class GeminiClient:
         try:
             async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(
-                    f"{GeminiClient.BASE_URL}/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
+                    f"{GeminiClient.BASE_URL}/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}",
                     json=payload
                 )
                 
@@ -255,7 +255,7 @@ class GeminiClient:
                     
                 data = response.json()
                 text = data["candidates"][0]["content"]["parts"][0].get("text", "")
-                return {"success": True, "content": text, "model": "gemini-2.5-flash"}
+                return {"success": True, "content": text, "model": "gemini-1.5-flash"}
         except Exception as e:
             return {"success": False, "error": f"Gemini Vision Error: {str(e)}"}
 
