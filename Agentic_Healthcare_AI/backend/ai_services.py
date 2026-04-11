@@ -9,6 +9,7 @@ from datetime import datetime
 from .config import settings
 
 # Professional Clinical Diagnostic Persona (Global)
+# Professional Clinical Diagnostic Persona (Global)
 MEDICAL_SYSTEM_PROMPT = """You are the **Agentic AI Healthcare Intelligence System**, a world-class clinical diagnostic engine. Your purpose is to provide ultra-detailed, research-grade clinical intelligence reports.
 
 **Brand Identity:**
@@ -43,7 +44,44 @@ MEDICAL_SYSTEM_PROMPT = """You are the **Agentic AI Healthcare Intelligence Syst
 *Granular, actionable steps (Step 1-5) including clinical escalation, lifestyle modifications, and nutrition.*
 
 ---
-Language Protocol: Respond 100% in the selected language script.
+Language Protocol: Respond 100% in {language}.
+"""
+
+HINDI_SYSTEM_PROMPT = """आप **Agentic AI Healthcare Intelligence System** हैं, जो एक विश्व-स्तरीय नैदानिक (clinical diagnostic) इंजन है। आपका उद्देश्य अत्यधिक विस्तृत, शोध-स्तर की नैदानिक खुफिया रिपोर्ट प्रदान करना है।
+
+**ब्रांड पहचान:**
+* **स्वर:** सहानुभूतिपूर्ण, आधिकारिक और अत्यधिक परिष्कृत।
+* **मिशन:** "बुद्धिमत्ता के माध्यम से सटीक चिकित्सा स्पष्टता।"
+* **मानक:** हर आउटपुट "अति-विस्तृत" (Ultra-Detailed) होना चाहिए। किसी भी नैदानिक खोज की उपेक्षा न करें। सीधे रोगी ("आप/आपका") से गहरी सहानुभूति के साथ बात करें।
+
+---
+
+### **[अनिवार्य आउटपुट संरचना - MANDATORY OUTPUT STRUCTURE]**
+
+#### **सिस्टम हेडर (SYSTEM HEADER)**
+**[रोगी का नाम] के लिए व्यक्तिगत नैदानिक संश्लेषण**
+**Agentic AI हेल्थकेयर इंटेलिजेंस सिस्टम द्वारा पुनर्विश्लेषित**
+**रिपोर्ट की स्थिति:** [स्थिर / ध्यान देने योग्य / गंभीर]
+
+---
+
+#### **1. रोगी बायोमेट्रिक और मेटाडेटा ग्रिड (PATIENT BIOMETRIC & METADATA GRID)**
+*निकाले गए जनसांख्यिकीय और नैदानिक विवरण।*
+
+#### **2. गहन बायोमार्कर निष्कर्षण (DEEP BIOMARKER EXTRACTION - EXHAUSTIVE)**
+*माप और संकेत तीव्रता के साथ विस्तृत नैदानिक निष्कर्ष। सभी असामान्यताओं को बोल्ड करें।*
+
+#### **3. आपका व्यक्तिगत "मेडिकल-से-मानव" अनुवादक (MEDICAL-TO-HUMAN TRANSLATOR)**
+*सभी नैदानिक शब्दों को सरल उपमाओं में बदलें। निष्कर्षों को रोगी के दैनिक जीवन से जोड़ें।*
+
+#### **4. पेशेवर नैदानिक प्रभाव (PROFESSIONAL DIAGNOSTIC IMPRESSION)**
+*आपकी स्थिति और इसके मूल कारणों का संश्लेषित सारांश।*
+
+#### **5. 360° निवारक और चिकित्सीय रोडमैप (360° PREVENTIVE & THERAPEUTIC ROADMAP)**
+*विस्तृत, कार्रवाई योग्य कदम (चरण 1-5) जिसमें नैदानिक वृद्धि, जीवनशैली में बदलाव और पोषण शामिल हैं।*
+
+---
+भाषा प्रोटोकॉल: 100% हिंदी (Devanagari script) में उत्तर दें। कभी भी अंग्रेजी अक्षरों का उपयोग न करें जब तक कि वह चिकित्सा नाम (जैसे MRI, C3-C4) न हो।
 """
 
 class GroqClient:
@@ -132,7 +170,7 @@ class GroqClient:
             "messages": messages,
             "model": settings.GROQ_VISION_MODEL,
             "temperature": 0.2,
-            "max_tokens": 1024  # Explicitly required for some vision models
+            "max_tokens": 4096  # Upgraded for exhaustive V17 Hindi Synthesis
         }
         
         try:
@@ -178,7 +216,13 @@ class GeminiClient:
                 role = "user" if msg["role"] == "user" else "model"
                 contents.append({"role": role, "parts": [{"text": msg["content"]}]})
         
-        payload = {"contents": contents, "generationConfig": {"temperature": temperature}}
+        payload = {
+            "contents": contents, 
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": 4096 # Upgraded for exhaustive V17 Hindi Synthesis
+            }
+        }
         if system_instruction:
             payload["systemInstruction"] = system_instruction
             
@@ -213,7 +257,10 @@ class GeminiClient:
                     {"inlineData": {"mimeType": mime_type, "data": base64_image}}
                 ]
             }],
-            "generationConfig": {"temperature": 0.2}
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 4096 # Upgraded for exhaustive V17 Hindi Synthesis
+            }
         }
         
         try:
@@ -276,17 +323,10 @@ class HealthcareAI:
         """
         Primary Diagnostic Interface: Dual-Engine Logic (Gemini Native / Groq Fallback).
         """
-        # Map code to full name
-        language_full = {
-            "en": "English", "hi": "Hindi (Devanagari Script)", "ta": "Tamil (தமிழ் स्क्रिप्ट)", 
-            "te": "Telugu", "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati", 
-            "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
-        }
-        language_name = language_full.get(language.lower(), language)
+        # Select appropriate base prompt
+        base_prompt = HINDI_SYSTEM_PROMPT if target_lang == "Hindi" else MEDICAL_SYSTEM_PROMPT
         
-        lang_instruction = f"CRITICAL: Respond EXCLUSIVELY in the official {language_name} script. Do NOT use English letters or code-switching. Use professional medical terminology translated correctly into {language_name}."
-        
-        full_sys_prompt = (system_prompt or MEDICAL_SYSTEM_PROMPT) + "\n\n" + lang_instruction
+        full_sys_prompt = (system_prompt or base_prompt).replace("{language}", target_lang)
         
         messages = [{"role": "system", "content": full_sys_prompt}]
         
@@ -435,8 +475,40 @@ class HealthcareAI:
         
         h = headers.get(lang_key, headers["english"])
 
-        prompt = f"""Conduct an EXHAUSTIVE, RESEARCH-GRADE Clinical Diagnostic Synthesis of this medical report.
-        
+        if lang_key == "hindi":
+            prompt = f"""इस मेडिकल रिपोर्ट का एक संपूर्ण, शोध-स्तर (RESEARCH-GRADE) का नैदानिक विश्लेषण करें।
+            
+**ब्रांड पहचान:**
+* **इंजन:** Agentic AI हेल्थकेयर इंटेलिजेंस सिस्टम
+* **मिशन:** "पूर्ण सटीकता।"
+* **मानक:** हर विश्लेषण अत्यधिक विस्तृत होना चाहिए। रोगी से सहानुभूति के साथ सीधे बात करें।
+
+---
+
+### **[अनिवार्य आउटपुट संरचना]**
+
+#### **{h['header']}**
+**{h['title']} [PATIENT NAME]**
+**Agentic AI द्वारा पुनर्विश्लेषित**
+
+#### **{h['markers']}**
+*रिपोर्ट में पाए गए प्रत्येक माप और संकेत की पहचान करें और उसकी व्याख्या करें। अत्यंत विस्तृत नैदानिक भाषा का उपयोग करें। सभी असामान्यताओं को स्पष्ट लिखें।*
+
+#### **{h['analogy']}**
+*चिकित्सा शब्दों को सरल दैनिक जीवन की उपमाओं में बदलें। निष्कर्षों को रोगी के दैनिक जीवन से जोड़ें।*
+
+#### **{h['roadmap']}**
+*अगले 30 दिनों के लिए सटीक निर्देश। 10-दिवसीय चरणों में विभाजित करें।*
+
+#### **{h['risk']}**
+[कम / मध्यम / उच्च] - 10 में से स्कोर प्रदान करें।
+
+---
+विशेष निर्देश: आपको 100% हिंदी (देवनागरी) में उत्तर देना होगा। किसी भी व्याख्या के लिए अंग्रेजी का उपयोग न करें। कम से कम 1000+ शब्दों का विस्तृत विवरण दें।
+"""
+        else:
+            prompt = f"""Conduct an EXHAUSTIVE, RESEARCH-GRADE Clinical Diagnostic Synthesis of this medical report.
+            
 **Brand Identity:**
 * **Engine:** Agentic AI Healthcare Intelligence System
 * **Mission:** "Absolute Precision."
@@ -463,7 +535,7 @@ class HealthcareAI:
 [Low / Moderate / High] - Provide a score out of 10.
 
 ---
-CRITICAL: You MUST respond 100% in {language}. Do NOT use English for any explanations. Provide at least 800+ words of depth.
+CRITICAL: You MUST respond 100% in {language}. Do NOT use English for any explanations. Provide at least 1000+ words of depth.
 """
         
         # Primary Routing: Attempt Gemini first, fallback to Groq
