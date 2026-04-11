@@ -354,47 +354,69 @@ sl.shapes.add_picture(
 footer(sl, 6)
 
 # ══════════════════════════════════════════════════════════════════
-# SLIDE 6 — DATABASE ARCHITECTURE
+# SLIDE 6 — DATABASE ARCHITECTURE (PART 1)
 # ══════════════════════════════════════════════════════════════════
 sl = add_slide(); fill_bg(sl)
-slide_header(sl, "Database Architecture  ★",
-             "MongoDB Atlas — Why NoSQL, How It's Structured, Partitioning Logic")
+slide_header(sl, "Database Architecture — Collections & Schema  ★",
+             "MongoDB Atlas — 6 Collections, Field-Level Schema, Partitioning")
 
-add_text(sl, "Why MongoDB (NoSQL)?", 0.5, 1.25, 5, 0.38,
-         font_size=15, bold=True, color=ACCENT_TEAL)
+# Left column: Why MongoDB
+add_text(sl, "Why MongoDB (NoSQL) over SQL?", 0.4, 1.25, 5.8, 0.38,
+         font_size=14, bold=True, color=ACCENT_TEAL)
 why = [
-    "  ✦  Variable schema — different vitals per disease type (creatinine for kidney, cholesterol for heart)",
-    "  ✦  Document model maps 1:1 to JSON REST API — zero transformation overhead",
-    "  ✦  Atlas provides auto-sharding, geo-distributed replicas, 99.99% uptime SLA",
-    "  ✦  Indexing + partitioned collections enable O(1) clinical triage lookup",
+    ("Variable Schema", "Diabetes → HbA1c fields; Heart → Cholesterol. SQL would need NULL columns."),
+    ("JSON-Native",     "REST API returns JSON. MongoDB stores BSON. Zero transformation needed."),
+    ("Atlas SLA 99.99%","Auto-sharding + geo-replicas. No manual DBA required."),
+    ("O(1) Triage",     "Partitioned collections → ASHA dashboard reads <5ms vs full 10K scan."),
 ]
-for i, w in enumerate(why):
-    add_text(sl, w, 0.5, 1.7 + i * 0.44, 6.2, 0.42, font_size=12, color=LIGHT_GREY)
+for i, (k, v) in enumerate(why):
+    y = 1.7 + i * 0.7
+    add_rect(sl, 0.4, y, 1.5, 0.55, DARK_GREY)
+    add_text(sl, k, 0.5, y + 0.08, 1.4, 0.4, font_size=10, bold=True, color=ACCENT_TEAL)
+    add_text(sl, v, 2.05, y + 0.06, 4.0, 0.5, font_size=11, color=LIGHT_GREY)
 
-add_divider(sl, 3.72, DARK_GREY)
-
-collections = [
-    ("patients",            "Master Registry",      "10,000+  records",  ACCENT_BLUE),
-    ("diagnoses",           "ML Predictions + Labs","30,000+  records",  ACCENT_TEAL),
-    ("consultations",       "AI Chat Logs",         "Growing",           ACCENT_GREEN),
-    ("patients_critical",   "🔴 Glucose > 180",     "~2,800  records",   ACCENT_RED),
-    ("patients_monitoring", "🟡 Glucose > 120",     "~4,100  records",   ACCENT_GOLD),
-    ("patients_optimal",    "🟢 Stable Patients",   "~3,100  records",   ACCENT_GREEN),
-]
-add_text(sl, "Collections:", 0.5, 3.85, 3, 0.38,
+# Right column: Collection cards
+add_text(sl, "6 Collections:", 6.6, 1.25, 6.5, 0.38,
          font_size=14, bold=True, color=WHITE)
+collections = [
+    ("patients",            "Master Registry",       "10,000+ records",  ACCENT_BLUE),
+    ("diagnoses",           "ML Predictions + Labs",  "30,000+ records",  ACCENT_TEAL),
+    ("consultations",       "AI Chat Logs",           "Growing",          ACCENT_GREEN),
+    ("patients_critical",   "🔴 Glucose > 180",       "~2,800 records",   ACCENT_RED),
+    ("patients_monitoring", "🟡 Glucose 120-180",     "~4,100 records",   ACCENT_GOLD),
+    ("patients_optimal",    "🟢 Stable Patients",     "~3,100 records",   ACCENT_GREEN),
+]
 for i, (coll, purpose, count, clr) in enumerate(collections):
-    col = i % 3; row = i // 3
-    x = 0.5 + col * 4.25
-    y = 4.3 + row * 1.35
-    add_rect(sl, x, y, 4.0, 1.15, DARK_GREY)
-    add_rect(sl, x, y, 0.07, 1.15, clr)
-    add_text(sl, coll, x + 0.2, y + 0.08, 3.7, 0.38,
-             font_size=12, bold=True, color=clr)
-    add_text(sl, purpose, x + 0.2, y + 0.46, 3.7, 0.3,
-             font_size=11, color=LIGHT_GREY)
-    add_text(sl, count, x + 0.2, y + 0.76, 3.7, 0.3,
+    col = i % 2; row = i // 2
+    x = 6.6 + col * 3.3
+    y = 1.72 + row * 1.8
+    add_rect(sl, x, y, 3.1, 1.55, DARK_GREY)
+    add_rect(sl, x, y, 0.06, 1.55, clr)
+    add_text(sl, coll, x + 0.15, y + 0.08, 2.9, 0.42,
+             font_size=11, bold=True, color=clr)
+    add_text(sl, purpose, x + 0.15, y + 0.52, 2.9, 0.35,
+             font_size=10, color=LIGHT_GREY)
+    add_text(sl, count, x + 0.15, y + 0.9, 2.9, 0.35,
              font_size=11, color=WHITE, bold=True)
+
+# Partition logic bar at bottom
+add_rect(sl, 0.4, 4.65, 12.5, 1.05, BG_CARD)
+add_rect(sl, 0.4, 4.65, 12.5, 0.06, ACCENT_RED)
+add_text(sl, "⚡ Partitioning Logic — runs on every save_diagnosis() call:",
+         0.55, 4.72, 10, 0.38, font_size=12, bold=True, color=WHITE)
+partition_code = (
+    "if glucose > 180 or hba1c > 8.0  →  patients_critical   🔴     "
+    "elif glucose > 120 or hba1c > 6.5  →  patients_monitoring 🟡     "
+    "else  →  patients_optimal  🟢"
+)
+add_text(sl, partition_code, 0.55, 5.12, 12.2, 0.5,
+         font_size=11, color=ACCENT_TEAL)
+
+# Field schema strip (patients collection)
+add_text(sl, "patients fields: patient_ref (unique) | name | age | gender | phone | email | created_at",
+         0.4, 5.78, 12.5, 0.38, font_size=11, color=LIGHT_GREY, italic=True)
+add_text(sl, "diagnoses fields: patient_ref | disease | prediction | confidence | risk_score | model_used | glucose | bp | bmi | hba1c | cholesterol | creatinine | created_at",
+         0.4, 6.18, 12.5, 0.38, font_size=11, color=LIGHT_GREY, italic=True)
 
 footer(sl, 7)
 
@@ -554,30 +576,36 @@ for j, (h, w, x) in enumerate(zip(headers, col_widths, col_x)):
              font_size=12, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
 
 rows = [
-    ("Indian Languages",    "✅ 10 Native",   "❌ None",     "❌ None",     "✅ 1 (Hindi)"),
-    ("Multi-Agent AI",      "✅ 3-Agent",     "❌ Watson NLP","❌ Custom DL","❌"),
-    ("Rural ASHA Mode",     "✅ Built-in",    "❌",           "❌",          "❌"),
-    ("Report OCR (Vision)", "✅ PDF + Image", "Limited",     "❌",          "❌"),
-    ("Disease Prediction",  "✅ 3 Diseases",  "Limited",     "Eye/Cancer",  "❌"),
-    ("Drug Safety Check",   "✅ OpenFDA",     "Partial",     "❌",          "❌"),
-    ("Cost to User",        "✅ FREE",        "💰 Enterprise","💰 Partner", "💰 Doctor fees"),
-    ("Open Source",         "✅ GitHub",      "❌ Proprietary","❌",         "❌"),
+    ("Indian Languages",    "✅ 10 Native",    "❌ None",      "❌ None",      "✅ 1 (Hindi)"),
+    ("Multi-Agent AI",      "✅ 3-Agent",      "❌ Watson NLP", "❌ Custom DL", "❌"),
+    ("Rural ASHA Mode",     "✅ Built-in",     "❌",            "❌",           "❌"),
+    ("Report OCR (Vision)", "✅ PDF + Image",  "Limited",      "❌",           "❌"),
+    ("Disease Prediction",  "✅ 3 Diseases",   "Limited",      "Eye/Cancer",   "❌"),
+    ("Drug Safety Check",   "✅ OpenFDA",      "Partial",      "❌",           "❌"),
+    ("Cost to User",        "✅ FREE / ₹0",    "💰 Enterprise", "💰 Partner",  "💰 Doctor fees"),
+    ("Open Source",         "✅ GitHub",       "❌ Proprietary", "❌",          "❌"),
 ]
 for i, row_data in enumerate(rows):
     bg_row = BG_CARD if i % 2 == 0 else DARK_GREY
-    y = 1.85 + i * 0.64
+    y = 1.85 + i * 0.58
     for j, (cell, w, x) in enumerate(zip(row_data, col_widths, col_x)):
-        add_rect(sl, x, y, w, 0.58, bg_row)
+        add_rect(sl, x, y, w, 0.52, bg_row)
         clr = (ACCENT_GREEN if "✅" in cell else
                ACCENT_RED if "❌" in cell else
                ACCENT_GOLD if "💰" in cell else WHITE)
-        fsz = 12 if j > 0 else 12
-        add_text(sl, cell, x + 0.06, y + 0.1, w - 0.1, 0.4,
-                 font_size=fsz, color=clr, align=PP_ALIGN.CENTER)
+        add_text(sl, cell, x + 0.06, y + 0.08, w - 0.1, 0.38,
+                 font_size=11, color=clr, align=PP_ALIGN.CENTER)
 
-add_text(sl, "Overall Score (Out of 10):   Our System → 9.5   |   IBM Watson → 3.2   |   DeepMind → 2.7   |   Practo → 3.8",
-         0.35, 7.0, 12.5, 0.32,
-         font_size=12, color=ACCENT_TEAL, bold=True)
+# Score row — highlighted
+score_y = 1.85 + 8 * 0.58
+add_rect(sl, 0.35, score_y, 11.65, 0.55, ACCENT_TEAL)
+scores = ["🏆 Overall Score (/10)", "9.5 / 10", "3.2 / 10", "2.7 / 10", "3.8 / 10"]
+for j, (cell, w, x) in enumerate(zip(scores, col_widths, col_x)):
+    clr = BG_DARK if j == 0 else (ACCENT_GOLD if j == 1 else WHITE)
+    fz  = 12 if j == 0 else 14
+    add_text(sl, cell, x + 0.06, score_y + 0.08, w - 0.1, 0.4,
+             font_size=fz, color=clr, bold=(j == 1), align=PP_ALIGN.CENTER)
+
 footer(sl, 11)
 
 # ══════════════════════════════════════════════════════════════════
@@ -849,10 +877,10 @@ add_text(sl, '"Agentic Healthcare AI — Transforming rural India one diagnosis 
          0.5, 6.5, 12.3, 0.45,
          font_size=13, color=ACCENT_TEAL, align=PP_ALIGN.CENTER, italic=True)
 
-footer(sl, 16)
+footer(sl, 17)
 
 # ─── Save ──────────────────────────────────────────────────────────
 out_path = r"d:\Agentic_Healthcare_AI\Agentic_Healthcare_AI_Presentation.pptx"
 prs.save(out_path)
-print(f"\n✅  Presentation saved → {out_path}")
-print(f"    Slides: {len(prs.slides)}")
+print(f"\n[OK] Presentation saved -> {out_path}")
+print(f"     Slides: {len(prs.slides)}")
