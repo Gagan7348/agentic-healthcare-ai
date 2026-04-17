@@ -23,7 +23,8 @@ import {
   Moon,
   ShieldCheck,
   Zap,
-  Layers
+  Layers,
+  Pill
 } from 'lucide-react'
 
 // Component Imports
@@ -34,12 +35,13 @@ import VoiceInput from './components/VoiceInput'
 import LanguageSelector from './components/LanguageSelector'
 import TreatmentPlan from './components/TreatmentPlan'
 import DiagnosticWorkflow from './components/DiagnosticWorkflow'
-import ReportAnalysis from './components/ReportAnalysis'
+
 import Home from './components/Home'
 import PatientRegistry from './components/PatientRegistry'
 import ChatBot from './components/ChatBot'
 import DrugInteractionChecker from './components/DrugInteractionChecker'
 import CollaborativeAI from './components/CollaborativeAI'
+import PharmacyInsights from './components/PharmacyInsights'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -69,16 +71,16 @@ function App() {
 
   // Translation keys for navigation
   const LANG_LABELS = {
-    en: { dashboard: 'Dashboard', screening: 'Health Screening', reports: 'Medical Reports', community: 'Community Health', care: 'Care Protocols', diagnostics: 'Diagnostics', ai: 'AI Consultation', voice: 'Voice Assistant', patients: 'Patient Records', drugs: 'Drug Checker', consensus: 'Joint Consensus' },
-    hi: { dashboard: 'डैशबोर्ड', screening: 'स्वास्थ्य जांच', reports: 'मेडिकल रिपोर्ट', community: 'सामुदायिक स्वास्थ्य', care: 'देखभाल प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI परामर्श', voice: 'आवाज़ सहायक', patients: 'रोगी रिकॉर्ड', drugs: 'दवाई जांचक', consensus: 'संयुक्त सलाह' },
-    bn: { dashboard: 'ড্যাশবোর্ড', screening: 'স্বাস্থ্য পরীক্ষা', reports: 'মেডিকেল রিপোর্ট', community: 'সমাজ স্বাস্থ্য', care: 'যত্ন প্রোটোকল', diagnostics: 'ডায়াগনস্টিক্স', ai: 'AI পরামর্শ', voice: 'ভয়েস সহায়ক', patients: 'রোগীর রেকর্ড', drugs: 'ড্রাগ চেকার', consensus: 'যৌথ পরামর্শ' },
-    ta: { dashboard: 'டாஷ்போர்டு', screening: 'சுகாதார பரிசோதனை', reports: 'மருத்துவ அறிக்கைகள்', community: 'சமுதாய சுகாதாரம்', care: 'சிகிச்சை நெறிமுறைகள்', diagnostics: 'நோயறிதல்', ai: 'AI ஆலோசனை', voice: 'குரல் உதவியாளர்', patients: 'நோயாளி பதிவுகள்', drugs: 'மருந்து சரிபார்ப்பு', consensus: 'கூட்டு ஒருமித்த கருத்து' },
-    te: { dashboard: 'డాష్‌బోర్డ్', screening: 'ఆరోగ్య స్క్రీనింగ్', reports: 'వైద్య నివేదికలు', community: 'సమాజ ఆరోగ్యం', care: 'సంరక్షణ ప్రోటోకాల్', diagnostics: 'రోగ నిర్ధారణ', ai: 'AI సంప్రదింపులు', voice: 'వాయిస్ అసిస్టెంట్', patients: 'రోగి రికార్డులు', drugs: 'డ్రగ్ చెకర్', consensus: 'సంయుక్త ఏకాభిప్రాయం' },
-    mr: { dashboard: 'डॅशबोर्ड', screening: 'आरोग्य तपासणी', reports: 'वैद्यकीय अहवाल', community: 'सामुदायिक आरोग्य', care: 'काळजी प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI सल्लामसलत', voice: 'व्हॉइस सहाय्यक', patients: 'रुग्ण नोंदी', drugs: 'औषध तपासक', consensus: 'संयुक्त सहमती' },
-    gu: { dashboard: 'ડૅશબોર્ડ', screening: 'આrોગ્ય સ્ક્રીનિંગ', reports: 'તbibical અહેવાલ', community: 'સamudayic આrોગ્ય', care: 'સeवा P&T', diagnostics: 'ઔ&P', ai: 'AI', voice: 'વaice', patients: 'Dvo', drugs: 'Drug', consensus: 'Consensus' },
-    kn: { dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', screening: 'ಆರೋಗ್ಯ ತಪಾಸಣೆ', reports: 'ವೈದ್ಯಕೀಯ ವರದಿ', community: 'ಸಮುದಾಯ ಆರೋಗ್ಯ', care: 'ಆರೈಕೆ ನಿಯಮಾವಳಿ', diagnostics: 'ರೋಗನಿರ್ಣಯ', ai: 'AI ಸಲಹೆ', voice: 'ಧ್ವನಿ ಸಹಾಯಕ', patients: 'ರೋಗಿ ದಾಖಲಾತಿ', drugs: 'ಔಷಧ ಪರೀಕ್ಷಕ', consensus: 'ಸಂಯುಕ್ತ ಒಮ್ಮತ' },
-    ml: { dashboard: 'ഡാഷ്ബോർഡ്', screening: 'ആരോഗ്യ സ്ക്രീനിംഗ്', reports: 'മെഡിക്കൽ റിപ്പോർട്ടുകൾ', community: 'സാമുദായിക ആരോഗ്യം', care: 'പരിചരണ നിർദ്ദേശങ്ങൾ', diagnostics: 'ഡയഗ്നോസ്റ്റിക്സ്', ai: 'AI കൺസൾട്ടേഷൻ', voice: 'ശബ്ദ സഹായി', patients: 'രോഗിയുടെ രേഖകൾ', drugs: 'മരുന്ന് പരിശോധകൻ', consensus: 'സംയുക്ത സമ്മതം' },
-    pa: { dashboard: 'ਡੈਸ਼ਬੋਰਡ', screening: 'ਸਿਹਤ ਜਾਂਚ', reports: 'ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ', community: 'ਸਮਾਜਿਕ ਸਿਹਤ', care: 'ਦੇਖਭਾਲ ਪ੍ਰੋਟੋਕੋਲ', diagnostics: 'ਡਾਇਗਨੌਸਟਿਕਸ', ai: 'AI ਸਲਾਹ', voice: 'ਆਵਾਜ਼ ਸਹਾਇਕ', patients: 'ਮਰੀਜ਼ ਰਿਕਾਰਡ', drugs: 'ਦਵਾਈ ਜਾਂਚਕਰਤਾ', consensus: 'ਸਾਂਝੀ ਸਹਿਮਤੀ' }
+    en: { dashboard: 'Dashboard', screening: 'Health Screening', reports: 'Medical Reports', community: 'Community Health', care: 'Care Protocols', diagnostics: 'Diagnostics', ai: 'AI Consultation', voice: 'Voice Assistant', patients: 'Patient Records', drugs: 'Drug Checker', pharmacy: 'Pharmacy', consensus: 'Joint Consensus' },
+    hi: { dashboard: 'डैशबोर्ड', screening: 'स्वास्थ्य जांच', reports: 'मेडिकल रिपोर्ट', community: 'सामुदायिक स्वास्थ्य', care: 'देखभाल प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI परामर्श', voice: 'आवाज़ सहायक', patients: 'रोगी रिकॉर्ड', drugs: 'दवाई जांचक', pharmacy: 'फार्मेसी', consensus: 'संयुक्त सलाह' },
+    bn: { dashboard: 'ড্যাশবোর্ড', screening: 'স্বাস্থ্য পরীক্ষা', reports: 'মেডিকেল রিপোর্ট', community: 'সমাজ স্বাস্থ্য', care: 'যত্ন প্রোটোকল', diagnostics: 'ডায়াগনস্টিক্স', ai: 'AI পরামর্শ', voice: 'ভয়েস সহায়ক', patients: 'রোগীর রেকর্ড', drugs: 'ড্রাগ চেকার', pharmacy: 'ফার্মেসি', consensus: 'যৌথ পরামর্শ' },
+    ta: { dashboard: 'டாஷ்போர்டு', screening: 'சுகாதார பரிசோதனை', reports: 'மருத்துவ அறிக்கைகள்', community: 'சமுதாய சுகாதாரம்', care: 'சிகிச்சை நெறிமுறைகள்', diagnostics: 'நோயறிதல்', ai: 'AI ஆலோசனை', voice: 'குரல் உதவியாளர்', patients: 'நோயாளி பதிவுகள்', drugs: 'மருந்து சரிபார்ப்பு', pharmacy: 'மருந்தகம்', consensus: 'கூட்டு ஒருமித்த கருத்து' },
+    te: { dashboard: 'డాష్‌బోర్డ్', screening: 'ఆరోగ్య స్క్రీనింగ్', reports: 'వైద్య నివేదికలు', community: 'సమాజ ఆరోగ్యం', care: 'సంరక్షణ ప్రోటోకాల్', diagnostics: 'రోగ నిర్ధారణ', ai: 'AI సంప్రదింపులు', voice: 'వాయిస్ అసిస్టెంట్', patients: 'రోగి రికార్డులు', drugs: 'డ్రగ్ చెకర్', pharmacy: 'ఫార్మసీ', consensus: 'సంయుక్త ఏకాభిప్రాయం' },
+    mr: { dashboard: 'डॅशबोर्ड', screening: 'आरोग्य तपासणी', reports: 'वैद्यकीय अहवाल', community: 'सामुदायिक आरोग्य', care: 'काळजी प्रोटोकॉल', diagnostics: 'निदान', ai: 'AI सल्लामसलत', voice: 'व्हॉइस सहाय्यक', patients: 'रुग्ण नोंदी', drugs: 'औषध तपासक', pharmacy: 'फार्मसी', consensus: 'संयुक्त सहमती' },
+    gu: { dashboard: 'ડૅશબોર્ડ', screening: 'આરોગ્ય સ્ક્રીનિંગ', reports: 'તબીબી અહેવાલ', community: 'સામુદાયિક આરોગ્ય', care: 'સ્વાસ્થ્ય પ્રોટોકોલ', diagnostics: 'નિદાન', ai: 'AI સલાહ', voice: 'અવાજ સહાયક', patients: 'દર્દી નોંધ', drugs: 'દવા તપાસ', pharmacy: 'ફાર્મસી', consensus: 'સંયુક્ત સહમતિ' },
+    kn: { dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', screening: 'ಆರೋಗ್ಯ ತಪಾಸಣೆ', reports: 'ವೈದ್ಯಕೀಯ ವರದಿ', community: 'ಸಮುದಾಯ ಆರೋಗ್ಯ', care: 'ಆರೈಕೆ ನಿಯಮಾವಳಿ', diagnostics: 'ರೋಗನಿರ್ಣಯ', ai: 'AI ಸಲಹೆ', voice: 'ಧ್ವನಿ ಸಹಾಯಕ', patients: 'ರೋಗಿ ದಾಖಲಾತಿ', drugs: 'ಔಷಧ ಪರೀಕ್ಷಕ', pharmacy: 'ಔಷಧಾಲಯ', consensus: 'ಸಂಯುಕ್ತ ಒಮ್ಮತ' },
+    ml: { dashboard: 'ഡാഷ്ബോർഡ്', screening: 'ആരോഗ്യ സ്ക്രീനിംഗ്', reports: 'മെഡിക്കൽ റിപ്പോർട്ടുകൾ', community: 'സാമുദായിക ആരോഗ്യം', care: 'പരിചരണ നിർദ്ദേശങ്ങൾ', diagnostics: 'ഡയഗ്നോസ്റ്റിക്സ്', ai: 'AI കൺസൾട്ടേഷൻ', voice: 'ശബ്ദ സഹായി', patients: 'രോഗിയുടെ രേഖകൾ', drugs: 'മരുന്ന് പരിശോധകൻ', pharmacy: 'ഫാർമസി', consensus: 'സംയുക്ത സമ്മതം' },
+    pa: { dashboard: 'ਡੈਸ਼ਬੋਰਡ', screening: 'ਸਿਹਤ ਜਾਂਚ', reports: 'ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ', community: 'ਸਮਾਜਿਕ ਸਿਹਤ', care: 'ਦੇਖਭਾਲ ਪ੍ਰੋਟੋਕੋਲ', diagnostics: 'ਡਾਇਗਨੌਸਟਿਕਸ', ai: 'AI ਸਲਾਹ', voice: 'ਆਵਾਜ਼ ਸਹਾਇਕ', patients: 'ਮਰੀਜ਼ ਰਿਕਾਰਡ', drugs: 'ਦਵਾਈ ਜਾਂਚਕਰਤਾ', pharmacy: 'ਫਾਰਮੇਸੀ', consensus: 'ਸਾਂਝੀ ਸਹਿਮਤੀ' }
   }
   const L = LANG_LABELS[language] || LANG_LABELS.en
 
@@ -86,7 +88,7 @@ function App() {
     en: [
       { key: 'home', label: L.dashboard, icon: LayoutDashboard, desc: 'Overview of clinical operations' },
       { key: 'predict', label: L.screening, icon: Activity, desc: 'Patient risk assessment' },
-      { key: 'report', label: L.reports, icon: FileText, desc: 'Clinical document analysis' },
+
       { key: 'asha', label: L.community, icon: Stethoscope, desc: 'Rural health coordinator' },
       { key: 'plan', label: L.care, icon: Clipboard, desc: 'Treatment guidelines' },
       { key: 'workflow', label: L.diagnostics, icon: TrendingUp, desc: 'Clinical decision support' },
@@ -94,6 +96,7 @@ function App() {
       { key: 'voice', label: L.voice, icon: Mic, desc: 'Voice-enabled control' },
       { key: 'patients', label: L.patients, icon: Users, desc: 'Management of patient data' },
       { key: 'drugs', label: L.drugs, icon: Zap, desc: 'Drug interaction analysis' },
+      { key: 'pharmacy', label: L.pharmacy, icon: Pill, desc: 'Village pharmacy intelligence' },
       { key: 'second-opinion', label: L.consensus, icon: Layers, desc: 'Collaborative AI review' },
     ]
   }
@@ -243,15 +246,16 @@ function App() {
           {/* Page Content */}
           <div className="px-8 py-8 pb-24 max-w-[1600px] mx-auto animate-in">
             {activeTab === 'home' && <Home language={language} onNavigate={navigate} />}
-            {activeTab === 'predict' && <Prediction language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
-            {activeTab === 'report' && <ReportAnalysis language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
-            {activeTab === 'asha' && <AshaMode language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
-            {activeTab === 'plan' && <TreatmentPlan language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
+            {activeTab === 'predict' && <Prediction language={language} selectedPatient={selectedPatient} onSelectedPatient={setSelectedPatient} onNavigate={navigate} />}
+
+            {activeTab === 'asha' && <AshaMode language={language} selectedPatient={selectedPatient} onSelectedPatient={setSelectedPatient} onNavigate={navigate} />}
+            {activeTab === 'plan' && <TreatmentPlan language={language} selectedPatient={selectedPatient} onSelectedPatient={setSelectedPatient} onNavigate={navigate} />}
             {activeTab === 'workflow' && <DiagnosticWorkflow language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
             {activeTab === 'chat' && <AIChat language={language} selectedPatient={selectedPatient} chatContext={chatContext} clearContext={() => setChatContext(null)} onNavigate={navigate} />}
             {activeTab === 'voice' && <VoiceInput language={language} selectedPatient={selectedPatient} onNavigate={navigate} />}
             {activeTab === 'patients' && <PatientRegistry language={language} selectedPatient={selectedPatient} onSelectedPatient={setSelectedPatient} onNavigate={navigate} />}
             {activeTab === 'drugs' && <DrugInteractionChecker />}
+            {activeTab === 'pharmacy' && <PharmacyInsights />}
             {activeTab === 'second-opinion' && <CollaborativeAI />}
           </div>
 

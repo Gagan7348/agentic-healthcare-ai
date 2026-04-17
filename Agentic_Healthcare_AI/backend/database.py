@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 
 from pymongo import MongoClient
-from .config import settings
+from config import settings
 
 DATABASE_URL = settings.DATABASE_URL
 
@@ -38,6 +38,7 @@ def init_db():
             db.patients.create_index("patient_ref", unique=True)
             db.diagnoses.create_index("patient_ref")
             db.consultations.create_index("patient_ref")
+            db.pharmacy_inventory.create_index("med_id", unique=True)
             
             # Specialized partitioned collection indexes
             db.patients_critical.create_index("patient_ref", unique=True)
@@ -211,3 +212,61 @@ def get_patient_history(db_instance, patient_ref: str) -> Dict:
         "total_diagnoses": len(diagnoses),
         "total_consultations": len(consultations),
     }
+
+# ── Pharmacy Helpers ─────────────────────────────────────────────────────────
+
+def get_inventory(db_instance) -> List[Dict]:
+    """Fetch entire pharmacy inventory sorted by priority"""
+    inventory = list(db_instance.pharmacy_inventory.find({}, {"_id": 0}))
+    # Priority sorting: Critical -> Essential -> Important
+    priority_map = {"Critical": 0, "Essential": 1, "Important": 2}
+    return sorted(inventory, key=lambda x: priority_map.get(x.get("priority", "Important"), 3))
+
+
+def update_stock(db_instance, med_id: str, quantity_change: int) -> bool:
+    """Increment or decrement stock for a specific medicine"""
+    result = db_instance.pharmacy_inventory.update_one(
+        {"med_id": med_id},
+        {"$inc": {"current_stock": quantity_change}, "$set": {"last_updated": datetime.utcnow()}}
+    )
+    return result.modified_count > 0
+
+
+def get_stock_recommendations(db_instance, village_name: str) -> List[Dict]:
+    """
+    Advanced logic to suggest stock based on local village disease trends.
+    Compares local diagnosis frequency with current inventory alerts.
+    """
+    # 1. Get recent diagnoses for this village
+    # We first need to get all patients from this village
+    patients = list(db_instance.patients.find({"village": village_name}, {"patient_ref": 1}))
+    patient_refs = [p["patient_ref"] for p in patients]
+    
+    # 2. Extract top diseases
+    pipeline = [
+        {"$match": {"patient_ref": {"$in": patient_refs}}},
+        {"$group": {"_id": "$disease", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    disease_trends = list(db_instance.diagnoses.aggregate(pipeline))
+    
+    # 3. Match with medicine mapping (simulated join)
+    inventory = list(db_instance.pharmacy_inventory.find({}, {"_id": 0}))
+    recommendations = []
+    
+    for disease in disease_trends:
+        # Find medicines indicated for this disease
+        # Note: In a real system, we'd have a many-to-many mapping
+        # Here we'll match by 'indication' tag or similar
+        related_meds = [m for m in inventory if disease["_id"] in m.get("indications", [])]
+        for med in related_meds:
+            gap = max(0, med["min_stock"] - med["current_stock"])
+            recommendations.append({
+                "medicine": med["name"],
+                "disease": disease["_id"],
+                "frequency": disease["count"],
+                "current_stock": med["current_stock"],
+                "suggested_add": gap + (disease["count"] * 5) # Heuristic for replenishment
+            })
+            
+    return recommendations

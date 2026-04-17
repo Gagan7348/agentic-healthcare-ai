@@ -23,7 +23,7 @@ import { API_URL } from '../config'
 import aiService, { languageMap } from '../services/aiService'
 import { getT } from '../utils/translations'
 
-function Prediction({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
+function Prediction({ language = 'en', selectedPatient = null, onSelectedPatient = null, onNavigate = () => {} }) {
   const globalT = getT(language);
   const [formData, setFormData] = useState({
     age: selectedPatient?.age || 45,
@@ -72,14 +72,20 @@ function Prediction({ language = 'en', selectedPatient = null, onNavigate = () =
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: (name === 'gender' || name === 'smoking') ? value : parseFloat(value) || 0
-    }))
+    const newValue = (name === 'gender' || name === 'smoking') ? value : parseFloat(value) || 0;
+    setFormData(prev => {
+      const updated = { ...prev, [name]: newValue };
+      if (onSelectedPatient) onSelectedPatient(updated);
+      return updated;
+    });
   }
 
   const handleToggle = (name) => {
-    setFormData(prev => ({ ...prev, [name]: prev[name] === 1 ? 0 : 1 }))
+    setFormData(prev => {
+      const updated = { ...prev, [name]: prev[name] === 1 ? 0 : 1 };
+      if (onSelectedPatient) onSelectedPatient(updated);
+      return updated;
+    });
   }
 
   const handleSubmit = async (e) => {

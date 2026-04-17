@@ -6,7 +6,7 @@ import { API_URL } from '../config'
 import aiService, { languageMap } from '../services/aiService'
 import { getT } from '../utils/translations'
 
-function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = () => {} }) {
+function TreatmentPlan({ language = 'en', selectedPatient = null, onSelectedPatient = null, onNavigate = () => {} }) {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(false)
   const [patientData, setPatientData] = useState({
@@ -18,6 +18,12 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
     bmi: selectedPatient?.bmi || 28.5,
     language: languageMap[language] || 'english'
   })
+
+  useEffect(() => {
+    if (selectedPatient) {
+      setPatientData(prev => ({ ...prev, ...selectedPatient }))
+    }
+  }, [selectedPatient])
   const [audioLoading, setAudioLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioInstance, setAudioInstance] = useState(null)
@@ -160,8 +166,15 @@ function TreatmentPlan({ language = 'en', selectedPatient = null, onNavigate = (
                   min={stat.min}
                   max={stat.max}
                   step={stat.step || 1}
-                  value={stat.val}
-                  onChange={(e) => setPatientData(prev => ({ ...prev, [stat.key]: parseFloat(e.target.value) }))}
+                  value={stat.val || stat.min}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setPatientData(prev => {
+                      const updated = { ...prev, [stat.key]: val };
+                      if (onSelectedPatient) onSelectedPatient(updated);
+                      return updated;
+                    });
+                  }}
                   className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
               </div>

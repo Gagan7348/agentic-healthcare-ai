@@ -7,6 +7,7 @@ FastAPI REST API with ML + AI Reasoning
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -24,15 +25,15 @@ _DATASET_DIR = _ROOT_DIR / "dataset" / "data" / "structured"
 _PATIENT_CSV = _DATASET_DIR / "patient_data.csv"
 _LAB_CSV = _DATASET_DIR / "lab_results.csv"
 
-from .config import settings
-from .ai_services import HealthcareAI, chat, analyze, explain, plan, ask, diet, analyze_report, voice_summary, consensus, dual_consensus_review
-from .voice_service import text_to_speech
+from config import settings
+from ai_services import HealthcareAI, chat, analyze, explain, plan, ask, diet, voice_summary, consensus, dual_consensus_review
+from voice_service import text_to_speech
 
 # ── New Advanced Integrations ─────────────────────────────────────────────────
-from .database import (
+from database import (
     init_db, get_db, save_patient, save_diagnosis, get_patient_history
 )
-from .external_apis import (
+from external_apis import (
     check_drug_interactions, get_drug_info,
     search_icd10,
     get_medlineplus_info, get_who_stats, WHO_INDICATORS
@@ -45,7 +46,7 @@ init_db()
 
 
 app = FastAPI(
-    title="Agentic AI OS - Grok Powered 🚀",
+    title="Agentic AI OS - Grok Powered",
     description="Advanced Diagnostic REST API with ML + xAI Grok Reasoning",
     version="4.1.0 (Grok Stability Edition)",
     docs_url="/docs",
@@ -77,7 +78,7 @@ for disease, file_prefix in model_files.items():
         models[disease] = joblib.load(_MODELS_DIR / f"{file_prefix}_model.pkl")
         scalers[disease] = joblib.load(_MODELS_DIR / f"{file_prefix}_scaler.pkl")
         features[disease] = joblib.load(_MODELS_DIR / f"{file_prefix}_features.pkl")
-        print(f"✅ Loaded {disease} model")
+        print(f"[OK] Loaded {disease} model")
     except Exception as e:
         print(f"WARNING: Could not load {disease} model: {e}")
 
@@ -142,6 +143,9 @@ class SecondOpinionRequest(BaseModel):
     patient_data: PatientData
     language: Optional[str] = "english"
 
+class StockUpdateRequest(BaseModel):
+    med_id: str
+    change: int
 
 # ============================================================================
 # Helper Functions
@@ -299,7 +303,7 @@ async def root():
         "features": [
             "ML Disease Predictions (Diabetes, Heart, Kidney)",
             "Grok Agentic Reasoning & Diagnostic Synthesis",
-            "Grok Vision Medical Report Analysis",
+
             "3-Agent Specialist Consensus Panel",
             "Regional Indian Language Support",
             "ASHA Rural Health Mode",
@@ -495,28 +499,16 @@ async def ai_plan_endpoint(patient: PatientData):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/ai/analyze-report")
-async def ai_analyze_report_endpoint(
-    file: UploadFile = File(...),
-    language: str = Form("english")
-):
-    """
-    Multimodal AI report analysis
-    Accepts: Medical report (PDF/Image)
-    Returns: Structured analysis and insights
-    """
+@app.post("/api/voice/synthesize")
+async def ai_synthesize_endpoint(text: str = Form(...), language: str = Form("english")):
     try:
-        # Read file content
-        content = await file.read()
-        
-        # Analyze using multimodal Gemini
-        result = await analyze_report(content, file.content_type, language)
-        
-        return result
-    
+        from voice_service import text_to_speech
+        audio_bytes = text_to_speech(text, language)
+        return Response(content=audio_bytes, media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.post("/api/ai/ask")
 async def ai_ask_endpoint(request: QuestionRequest):
@@ -628,13 +620,27 @@ async def asha_analyze(patient: PatientData, symptoms: SymptomData):
         
         # Get AI analysis for additional insights (Voice optimized)
         ai_analysis = None
-        if settings.has_groq_key:
+        if settings.has_groq_key or settings.has_gemini_key:
             try:
-                ai_result = voice_summary(patient.dict(), symptoms.dict(), urgency_text, language=patient.language)
+                lang_map = {
+                    "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
+                    "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati",
+                    "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi", "en": "English"
+                }
+                lang_name = lang_map.get(patient.language, "English")
+                summary_prompt = (
+                    f"Provide a brief 2-sentence clinical summary for an ASHA community health worker. "
+                    f"Urgency level: {urgency_text}. Focus on the most critical action needed. "
+                    f"You MUST respond 100% in {lang_name}."
+                )
+                # FIX: properly await the async call instead of using asyncio.run inside FastAPI
+                ai_result = await HealthcareAI.chat_with_gemini(
+                    summary_prompt, patient.dict(), language=patient.language
+                )
                 if ai_result.get("success"):
                     ai_analysis = ai_result.get("response", "")
-            except:
-                pass
+            except Exception as e:
+                print(f"Voice summary generation failed: {e}")
         
         return {
             "success": True,
@@ -657,18 +663,99 @@ async def asha_analyze(patient: PatientData, symptoms: SymptomData):
 @app.post("/api/asha/consensus")
 async def asha_consensus(patient: PatientData, symptoms: SymptomData):
     """
-    ASHA mode multi-agent consensus panel
-    Returns: Specialized insights from multiple AI agents
+    ASHA mode multi-agent consensus panel.
+    Returns: Specialized insights from 3 AI specialist agents + synthesized consensus.
     """
     try:
         # Get ML predictions
         predictions = make_all_predictions(patient)
-        
-        # Get Agentic Consensus
-        result = consensus(patient.dict(), symptoms.dict(), predictions, language=patient.language)
-        
+
+        # FIX: consensus() is async — must be awaited
+        result = await consensus(patient.dict(), symptoms.dict(), predictions, language=patient.language)
+
         return result
-    
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/asha/handover")
+async def generate_handover_document(
+    patient: PatientData,
+    symptoms: SymptomData,
+    urgency: str = "GREEN",
+    asha_worker_id: str = "",
+    asha_worker_name: str = "",
+    asha_zone: str = ""
+):
+    """
+    Generate a structured clinical handover document for PHC transfer.
+    Used when an ASHA worker needs to refer a patient to a Primary Health Centre.
+    Returns: JSON handover object ready for display/print.
+    """
+    try:
+        predictions = make_all_predictions(patient)
+        
+        # Risk tier labels
+        def risk_label(v):
+            if v >= 0.7: return "HIGH"
+            if v >= 0.4: return "MODERATE"
+            return "LOW"
+
+        active_symptoms = [k for k, v in symptoms.dict().items() if v]
+
+        handover = {
+            "success": True,
+            "document_id": f"ASHA-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "generated_at": datetime.now().isoformat(),
+            "asha_worker": {
+                "id": asha_worker_id or "ASHA-UNKNOWN",
+                "name": asha_worker_name or "Community Health Worker",
+                "zone": asha_zone or "Unspecified Zone"
+            },
+            "patient": {
+                "age": patient.age,
+                "gender": patient.gender,
+                "village": getattr(patient, 'village', 'Unknown'),
+            },
+            "triage": {
+                "urgency": urgency,
+                "urgency_display": {
+                    "RED": "🚨 CRITICAL — Immediate Referral Required",
+                    "YELLOW": "🔶 MODERATE — PHC Visit Within 24–48hrs",
+                    "GREEN": "🟢 STABLE — Routine Monitoring"
+                }.get(urgency, urgency)
+            },
+            "clinical_data": {
+                "vitals": {
+                    "glucose": f"{patient.glucose} mg/dL",
+                    "hba1c": f"{patient.hba1c} %",
+                    "bp_systolic": f"{patient.bp} mmHg",
+                    "bmi": f"{patient.bmi} kg/m²",
+                    "cholesterol": f"{patient.cholesterol} mg/dL",
+                    "creatinine": f"{patient.creatinine} mg/dL"
+                },
+                "risk_scores": {
+                    "diabetes": {"probability": round(predictions['diabetes'] * 100, 1), "tier": risk_label(predictions['diabetes'])},
+                    "heart": {"probability": round(predictions['heart'] * 100, 1), "tier": risk_label(predictions['heart'])},
+                    "kidney": {"probability": round(predictions['kidney'] * 100, 1), "tier": risk_label(predictions['kidney'])}
+                },
+                "active_symptoms": active_symptoms,
+                "risk_factors": {
+                    "smoking": bool(patient.smoking),
+                    "family_history_diabetes": bool(patient.family_history_diabetes),
+                    "family_history_heart": bool(patient.family_history_heart)
+                }
+            },
+            "instructions": {
+                "RED": ["Immediate transfer to PHC/Hospital", "Call 108 Emergency Ambulance", "Do NOT leave patient alone"],
+                "YELLOW": ["Schedule PHC appointment within 48 hours", "Monitor vitals every 4 hours", "Continue prescribed medications"],
+                "GREEN": ["Home care sufficient", "Follow-up in 1–2 weeks", "Encourage healthy lifestyle"]
+            }.get(urgency, [])
+        }
+
+        return handover
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1091,6 +1178,39 @@ async def db_stats(db: Any = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/pharmacy/inventory")
+async def api_get_inventory(db: Any = Depends(get_db)):
+    """Fetch current medicine stock from pharmacy across all categories"""
+    try:
+        from database import get_inventory
+        inventory = get_inventory(db)
+        return {"success": True, "inventory": inventory}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/pharmacy/stock-update")
+async def api_update_stock(request: StockUpdateRequest, db: Any = Depends(get_db)):
+    """Update stock level for a specific medication (e.g. after dispensing)"""
+    try:
+        from database import update_stock
+        success = update_stock(db, request.med_id, request.change)
+        return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/pharmacy/recommendations/{village_name}")
+async def api_get_recommendations(village_name: str, db: Any = Depends(get_db)):
+    """AI-powered stock recommendations based on village disease prevalence"""
+    try:
+        from database import get_stock_recommendations
+        recs = get_stock_recommendations(db, village_name)
+        return {"success": True, "recommendations": recs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # Run Server
 # ============================================================================
@@ -1099,7 +1219,7 @@ if __name__ == "__main__":
     import uvicorn
     
     print("\n" + "="*70)
-    print("🏥 Healthcare AI System - Gemini Edition")
+    print("Healthcare AI System - Gemini Edition")
     print("="*70)
     print(f"ML Models loaded: {len(models)}/3")
     if settings.has_gemini_key:

@@ -6,7 +6,7 @@ import base64
 import io
 from PIL import Image
 from datetime import datetime
-from .config import settings
+from config import settings
 
 # Professional Clinical Diagnostic Persona (Global)
 # Professional Clinical Diagnostic Persona (Global)
@@ -323,9 +323,13 @@ class HealthcareAI:
         """
         Primary Diagnostic Interface: Dual-Engine Logic (Gemini Native / Groq Fallback).
         """
+        # FIX: Derive target_lang from language param BEFORE using it
+        lang_lower = str(language).lower()
+        target_lang = "Hindi" if lang_lower in ["hi", "hindi", "हिंदी"] else "English"
+
         # Select appropriate base prompt
         base_prompt = HINDI_SYSTEM_PROMPT if target_lang == "Hindi" else MEDICAL_SYSTEM_PROMPT
-        
+
         full_sys_prompt = (system_prompt or base_prompt).replace("{language}", target_lang)
         
         messages = [{"role": "system", "content": full_sys_prompt}]
@@ -588,9 +592,33 @@ async def diet(patient_data: Dict, predictions: Dict, language: str = "en") -> D
     return await HealthcareAI.get_collaborative_consensus_response("Dietary Recommendations", patient_data, predictions, language)
 
 def voice_summary(patient_data: Dict, symptoms: Dict, urgency: str, language: str = "en") -> Dict:
+    """
+    Synchronous wrapper for voice summary generation.
+    Safe to call from sync context only — do NOT call from inside an async function.
+    """
     import asyncio
-    prompt = f"Provide a brief 2-sentence clinical summary. Urgency: {urgency}. You MUST respond 100% in {language}."
-    return asyncio.run(HealthcareAI.chat_with_gemini(prompt, patient_data, language=language))
+    import sys
+    lang_map = {
+        "hi": "pure Hindi (हिंदी)", "ta": "Tamil", "te": "Telugu",
+        "bn": "Bengali", "mr": "Marathi", "gu": "Gujarati",
+        "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi", "en": "English"
+    }
+    lang_name = lang_map.get(language, "English")
+    prompt = (
+        f"Provide a brief 2-sentence clinical summary for an ASHA worker to read aloud. "
+        f"Urgency level: {urgency}. Focus on the most critical action needed. "
+        f"You MUST respond 100% in {lang_name}."
+    )
+    # Use existing event loop if available (e.g., inside FastAPI background task)
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # We are in an async context — return a placeholder to avoid deadlock
+            # Caller should use await HealthcareAI.chat_with_gemini directly
+            return {"success": False, "response": "", "error": "Call from async context — use await directly"}
+        return loop.run_until_complete(HealthcareAI.chat_with_gemini(prompt, patient_data, language=language))
+    except RuntimeError:
+        return asyncio.run(HealthcareAI.chat_with_gemini(prompt, patient_data, language=language))
 
 async def dual_consensus_review(patient_data: Dict, ml_predictions: Dict, gpt_analysis: str, language: str = "en") -> Dict:
     """Consensus Review using Groq Llama-3.3-70B"""

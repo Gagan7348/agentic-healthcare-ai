@@ -205,12 +205,9 @@ function Home({ language = 'en', onNavigate }) {
     pa:  { predict: 'ਸਿਹਤ ਜਾਂਚ', report: 'ਮੈਡੀਕਲ ਰਿਪੋਰਟਾਂ', asha: 'ASHA ਹੱਬ', plan: 'ਇਲਾਜ ਯੋਜਨਾਵਾਂ', chat: 'AI ਸਲਾਹ', opinion: 'ਸਾਂਝੀ AI ਸਹਿਮਤੀ' },
   }
   const ml_ = moduleLabels[language] || moduleLabels.en
-
   const modules = [
     { key: 'predict', label: ml_.predict, icon: Activity, desc: 'Agentic AI-powered risk assessment for critical conditions.', color: 'blue' },
-    { key: 'report', label: ml_.report, icon: FileText, desc: 'Multimodal analysis of clinical documents and imaging.', color: 'indigo' },
     { key: 'asha', label: ml_.asha, icon: Stethoscope, desc: 'Decentralized community health decision support.', color: 'rose' },
-    { key: 'plan', label: ml_.plan, icon: Clipboard, desc: 'Personalized evidence-based clinical protocols.', color: 'emerald' },
     { key: 'chat', label: ml_.chat, icon: MessageSquare, desc: 'Direct multi-agent collaborative diagnostics.', color: 'violet' },
     { key: 'second-opinion', label: ml_.opinion, icon: Zap, desc: 'Dual-AI model synthesis for complex cases.', color: 'amber' },
   ]
