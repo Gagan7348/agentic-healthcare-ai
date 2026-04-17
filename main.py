@@ -48,7 +48,7 @@ init_db()
 app = FastAPI(
     title="Agentic AI OS - Grok Powered",
     description="Advanced Diagnostic REST API with ML + xAI Grok Reasoning",
-    version="4.1.0 (Grok Stability Edition)",
+    version="4.1.2 (Ultra-Stability Patch)",
     docs_url="/docs",
     redoc_url="/redoc"
 )
