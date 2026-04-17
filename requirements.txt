@@ -30,7 +30,7 @@ httpx==0.28.1
 python-dotenv==1.0.0
 
 # Translation & Multilingual Support
-googletrans==4.0.2
+deep-translator==1.11.4
 langdetect==1.0.9
 
 # Voice - Speech Recognition
@@ -38,8 +38,8 @@ SpeechRecognition==3.10.0
 pydub==0.25.1
 gTTS==2.4.0
 
-# Audio Processing
-# (pyaudio and wave removed as they require system-level portaudio not available on cloud servers)
+# Audio Processing (Handled via pydub/SpeechRecognition - no pyaudio needed on server)
+# Removed pyaudio/wave due to system dependency conflicts on cloud
 
 # Additional Utilities
 requests==2.31.0
